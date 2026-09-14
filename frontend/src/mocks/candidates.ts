@@ -12,6 +12,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 612,
     createdAt: '2026-08-10T08:00:00Z',
+    position: { id: 'pos_001', title: 'President', electionId: 'elec_001', description: 'Student Council President', maxSelections: 1, order: 1 },
   },
   {
     id: 'cand_002',
@@ -24,6 +25,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 589,
     createdAt: '2026-08-10T08:00:00Z',
+    position: { id: 'pos_001', title: 'President', electionId: 'elec_001', description: 'Student Council President', maxSelections: 1, order: 1 },
   },
   {
     id: 'cand_003',
@@ -36,6 +38,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 431,
     createdAt: '2026-08-10T08:00:00Z',
+    position: { id: 'pos_001', title: 'President', electionId: 'elec_001', description: 'Student Council President', maxSelections: 1, order: 1 },
   },
   {
     id: 'cand_004',
@@ -48,6 +51,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 215,
     createdAt: '2026-08-10T08:00:00Z',
+    position: { id: 'pos_002', title: 'Vice President', electionId: 'elec_001', description: 'Student Council Vice President', maxSelections: 1, order: 2 },
   },
   {
     id: 'cand_005',
@@ -60,6 +64,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 198,
     createdAt: '2026-08-10T08:00:00Z',
+    position: { id: 'pos_002', title: 'Vice President', electionId: 'elec_001', description: 'Student Council Vice President', maxSelections: 1, order: 2 },
   },
   {
     id: 'cand_006',
@@ -72,6 +77,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 340,
     createdAt: '2026-08-10T08:00:00Z',
+    position: { id: 'pos_003', title: 'Secretary', electionId: 'elec_001', description: 'Student Council Secretary', maxSelections: 1, order: 3 },
   },
   {
     id: 'cand_007',
@@ -84,6 +90,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 42,
     createdAt: '2026-08-20T10:00:00Z',
+    position: { id: 'pos_004', title: 'Department Head', electionId: 'elec_002', description: 'CS Department Head', maxSelections: 1, order: 1 },
   },
   {
     id: 'cand_008',
@@ -96,6 +103,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 38,
     createdAt: '2026-08-20T10:00:00Z',
+    position: { id: 'pos_004', title: 'Department Head', electionId: 'elec_002', description: 'CS Department Head', maxSelections: 1, order: 1 },
   },
   {
     id: 'cand_009',
@@ -108,6 +116,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 9,
     createdAt: '2026-08-20T10:00:00Z',
+    position: { id: 'pos_004', title: 'Department Head', electionId: 'elec_002', description: 'CS Department Head', maxSelections: 1, order: 1 },
   },
   {
     id: 'cand_010',
@@ -120,6 +129,7 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 0,
     createdAt: '2026-09-02T09:00:00Z',
+    position: { id: 'pos_005', title: 'Secretary', electionId: 'elec_003', description: 'Programming Club Secretary', maxSelections: 1, order: 1 },
   },
   {
     id: 'cand_011',
@@ -132,17 +142,19 @@ export const mockCandidates: Candidate[] = [
     status: 'approved',
     votesReceived: 0,
     createdAt: '2026-09-02T09:00:00Z',
+    position: { id: 'pos_005', title: 'Secretary', electionId: 'elec_003', description: 'Programming Club Secretary', maxSelections: 1, order: 1 },
   },
   {
     id: 'cand_012',
     electionId: 'elec_003',
     positionId: 'pos_005',
-    name: 'Ryan O\'Brien',
+    name: "Ryan O'Brien",
     party: 'Community First',
     biography: 'Second-year Computer Science major.',
     manifesto: 'Inclusive events, beginner-friendly sessions, and peer tutoring.',
     status: 'approved',
     votesReceived: 0,
     createdAt: '2026-09-02T09:00:00Z',
+    position: { id: 'pos_005', title: 'Secretary', electionId: 'elec_003', description: 'Programming Club Secretary', maxSelections: 1, order: 1 },
   },
 ];

@@ -46,10 +46,8 @@ export default function LoginPage() {
       if (!success) throw new Error('Invalid email or password.');
       toast('success', 'You have successfully signed in.');
 
-      if (user?.role === 'super_admin') {
-        navigate('/super-admin');
-      } else if (user?.role === 'admin') {
-        navigate('/admin/dashboard');
+      if (user?.role === 'super_admin' || user?.role === 'admin') {
+        navigate('/admin');
       } else {
         navigate('/dashboard');
       }

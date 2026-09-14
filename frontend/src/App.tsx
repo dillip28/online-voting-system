@@ -2,6 +2,9 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastProvider } from '@/components/ui/toast';
 import ProtectedRoute from '@/layouts/protected-route';
+import PublicLayout from '@/layouts/public-layout';
+import AuthLayout from '@/layouts/auth-layout';
+import ErrorBoundary from '@/components/error-boundary';
 
 const LandingPage = lazy(() => import('@/pages/public/landing-page'));
 const LoginPage = lazy(() => import('@/pages/auth/login-page'));
@@ -47,18 +50,25 @@ function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/about" element={<LandingPage />} />
-            <Route path="/how-it-works" element={<LandingPage />} />
-            <Route path="/security" element={<LandingPage />} />
-            <Route path="/contact" element={<LandingPage />} />
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<LandingPage />} />
+              <Route path="/how-it-works" element={<LandingPage />} />
+              <Route path="/security" element={<LandingPage />} />
+              <Route path="/contact" element={<LandingPage />} />
+            </Route>
+
+            {/* Auth routes */}
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+            </Route>
 
             {/* Voter routes */}
             <Route
@@ -230,6 +240,7 @@ function App() {
             <Route path="*" element={<LandingPage />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </ToastProvider>
     </BrowserRouter>
   );

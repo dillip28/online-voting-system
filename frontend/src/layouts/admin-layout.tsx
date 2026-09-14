@@ -18,6 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
+import { useNotificationStore } from '@/store/notification-store';
 import { getInitials } from '@/lib/utils';
 
 const mainNav = [
@@ -42,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const location = useLocation();
   const { sidebarOpen, toggleSidebar, closeSidebar } = useUiStore();
   const { user, logout } = useAuthStore();
+  const { unreadCount, fetchNotifications } = useNotificationStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -61,8 +63,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     closeSidebar();
   }, [location.pathname, closeSidebar]);
 
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
   function renderNavItem(item: { label: string; href: string; icon: React.ElementType }) {
-    const isActive = location.pathname === item.href;
+    const isActive = item.href === '/admin'
+      ? location.pathname === item.href
+      : location.pathname === item.href || location.pathname.startsWith(item.href + '/');
     return (
       <Link
         key={item.href}
@@ -156,9 +164,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-danger-500 text-[10px] font-bold text-white">
-                5
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-danger-500 text-[10px] font-bold text-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
 
             <div className="relative" ref={dropdownRef}>

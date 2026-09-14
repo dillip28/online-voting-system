@@ -52,8 +52,8 @@ export const useVotingStore = create<VotingStore>()((set, get) => ({
   },
 
   submitVote: async () => {
-    const { selectedElection, selections } = get();
-    if (!selectedElection || selections.size === 0) return false;
+    const { selectedElection, selections, isSubmitting } = get();
+    if (!selectedElection || selections.size === 0 || isSubmitting) return false;
 
     set({ isSubmitting: true });
     await new Promise((resolve) => setTimeout(resolve, 1500));

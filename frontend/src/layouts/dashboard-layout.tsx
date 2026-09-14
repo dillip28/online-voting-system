@@ -17,11 +17,12 @@ import {
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
+import { useNotificationStore } from '@/store/notification-store';
 import { getInitials } from '@/lib/utils';
 
 const sidebarItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Elections', href: '/dashboard/elections', icon: Vote },
+  { label: 'Elections', href: '/elections', icon: Vote },
   { label: 'Vote History', href: '/dashboard/history', icon: History },
   { label: 'Profile', href: '/dashboard/profile', icon: User },
   { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
@@ -32,6 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const location = useLocation();
   const { sidebarOpen, toggleSidebar, closeSidebar } = useUiStore();
   const { user, logout } = useAuthStore();
+  const { unreadCount, fetchNotifications } = useNotificationStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -48,6 +50,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     closeSidebar();
   }, [location.pathname, closeSidebar]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -83,7 +89,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <nav className="flex-1 space-y-1 px-3 py-4">
           {sidebarItems.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = item.href === '/dashboard'
+              ? location.pathname === item.href
+              : location.pathname === item.href || location.pathname.startsWith(item.href + '/');
             return (
               <Link
                 key={item.href}
@@ -128,9 +136,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-danger-500 text-[10px] font-bold text-white">
-                3
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-danger-500 text-[10px] font-bold text-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
 
             <div className="relative" ref={dropdownRef}>
@@ -174,7 +184,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     Vote History
                   </Link>
                   <Link
-                    to="/dashboard/settings"
+                    to="/dashboard/profile"
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                     onClick={() => setDropdownOpen(false)}
                   >

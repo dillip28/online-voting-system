@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({ children }: { children?: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <div className="hidden w-1/2 bg-gradient-to-br from-primary-600 to-primary-800 lg:flex lg:flex-col lg:items-center lg:justify-center">
@@ -45,7 +45,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             </span>
           </div>
 
-          {children}
+          {children || <Outlet />}
 
           <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
             <Link to="/" className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
