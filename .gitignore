@@ -1,31 +1,61 @@
-.env
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
 *.log
-.DS_Store
-Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs
+.idea/
+.vscode/
 *.swp
 *.swo
-.build
-public/bundle.js
-public/bundle.js.map
-dist/
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
 *.pyc
 *.pyo
 __pycache__/
-*.egg-info
+*.egg-info/
 venv/
-.env
-.env.local
-.idea/
-.vscode/
-*.suo
-*.sln
-*.suo
-*.dll
-*.exe
-*.pdb
+
+# Archives
 *.zip
 *.rar
 *.7z
-download/
-upload/
+
+# Uploads
+uploads/
+
+# Database
+*.db
+*.sqlite
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.tgz
+.cache/
