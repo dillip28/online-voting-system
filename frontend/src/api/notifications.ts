@@ -2,7 +2,14 @@ import { apiClient } from './client';
 import type { ApiResponse, Notification } from '@/types';
 
 export const notificationsApi = {
-  async getNotifications(filters?: { isRead?: boolean; type?: string; page?: number; limit?: number }): Promise<ApiResponse<{ data: Notification[]; total: number; unreadCount: number }>> {
+  async getNotifications(filters?: { unreadOnly?: boolean; page?: number; limit?: number }): Promise<ApiResponse<{
+    items: Notification[];
+    total: number;
+    unreadCount: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>> {
     return apiClient.get('/notifications', { params: filters as Record<string, string | number | boolean | undefined> });
   },
 
@@ -10,7 +17,7 @@ export const notificationsApi = {
     return apiClient.patch(`/notifications/${id}/read`);
   },
 
-  async markAllAsRead(): Promise<ApiResponse<{ message: string }>> {
+  async markAllAsRead(): Promise<ApiResponse<{ markedCount: number }>> {
     return apiClient.patch('/notifications/read-all');
   },
 

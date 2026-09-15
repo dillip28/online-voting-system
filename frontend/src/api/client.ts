@@ -36,13 +36,14 @@ class ApiClient {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (response.status === 401) {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
       window.location.href = '/login';
       throw new Error('Unauthorized');
     }
 
     if (!response.ok) {
       const errorBody = await response.json().catch(() => null);
-      const message = errorBody?.message || `Request failed with status ${response.status}`;
+      const message = errorBody?.error?.message || errorBody?.message || `Request failed with status ${response.status}`;
       throw new ApiError(message, response.status, errorBody);
     }
 

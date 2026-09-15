@@ -1,12 +1,14 @@
 import { create } from 'zustand';
-import type { Election, Vote } from '@/types';
+import type { Election } from '@/types';
+import { votesApi } from '@/api/votes';
 
 type VotingStep = 'select' | 'review' | 'confirm' | 'success';
 
 interface SubmissionResult {
-  vote: Vote;
+  ballotId?: string;
   confirmationId: string;
   submittedAt: string;
+  message: string;
 }
 
 interface VotingState {
@@ -15,6 +17,7 @@ interface VotingState {
   currentStep: VotingStep;
   isSubmitting: boolean;
   submissionResult: SubmissionResult | null;
+  error: string | null;
 }
 
 interface VotingActions {
@@ -34,6 +37,7 @@ export const useVotingStore = create<VotingStore>()((set, get) => ({
   currentStep: 'select',
   isSubmitting: false,
   submissionResult: null,
+  error: null,
 
   selectCandidate: (positionId: string, candidateId: string) => {
     set((state) => {
@@ -55,33 +59,50 @@ export const useVotingStore = create<VotingStore>()((set, get) => ({
     const { selectedElection, selections, isSubmitting } = get();
     if (!selectedElection || selections.size === 0 || isSubmitting) return false;
 
-    set({ isSubmitting: true });
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    set({ isSubmitting: true, error: null });
+    try {
+      const choices = Array.from(selections.entries()).map(([positionId, candidateId]) => ({
+        positionId,
+        candidateId: candidateId === 'NOTA' ? null : candidateId,
+      }));
 
-    const confirmationId = `VOTE-${selectedElection.id.slice(-4).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
-
-    const submissionResult: SubmissionResult = {
-      vote: {
-        id: `vote_${Date.now()}`,
+      const response = await votesApi.submitBallot({
         electionId: selectedElection.id,
-        voterId: '',
-        positionId: selections.keys().next().value ?? '',
-        candidateId: selections.values().next().value ?? null,
-        isNota: false,
-        submittedAt: new Date().toISOString(),
-        confirmationId,
-        status: 'submitted',
-      },
-      confirmationId,
-      submittedAt: new Date().toISOString(),
-    };
+        choices,
+      });
 
-    set({
-      isSubmitting: false,
-      submissionResult,
-      currentStep: 'success',
-    });
-    return true;
+      if (response.success && response.data) {
+        const { data } = response;
+        if (data.alreadyVoted) {
+          set({
+            isSubmitting: false,
+            error: 'You have already voted in this election',
+          });
+          return false;
+        }
+
+        const submissionResult: SubmissionResult = {
+          ballotId: data.ballotId,
+          confirmationId: data.confirmationToken || '',
+          submittedAt: data.votedAt || new Date().toISOString(),
+          message: data.message,
+        };
+
+        set({
+          isSubmitting: false,
+          submissionResult,
+          currentStep: 'success',
+        });
+        return true;
+      }
+
+      set({ isSubmitting: false, error: 'Failed to submit vote' });
+      return false;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit vote';
+      set({ isSubmitting: false, error: errorMessage });
+      return false;
+    }
   },
 
   resetVoting: () => {
@@ -91,6 +112,7 @@ export const useVotingStore = create<VotingStore>()((set, get) => ({
       currentStep: 'select',
       isSubmitting: false,
       submissionResult: null,
+      error: null,
     });
   },
 
@@ -104,6 +126,7 @@ export const useVotingStore = create<VotingStore>()((set, get) => ({
       selections: new Map<string, string>(),
       currentStep: 'select',
       submissionResult: null,
+      error: null,
     });
   },
 }));

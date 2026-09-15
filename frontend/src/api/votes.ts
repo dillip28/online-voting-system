@@ -1,24 +1,54 @@
 import { apiClient } from './client';
-import type { ApiResponse, Vote, VoteHistory, VoteSubmission } from '@/types';
+import type { ApiResponse, VoteHistory } from '@/types';
 
-interface VoteConfirmation {
-  confirmationId: string;
+interface BallotChoice {
+  positionId: string;
+  candidateId: string | null;
+}
+
+interface SubmitBallotData {
+  electionId: string;
+  choices: BallotChoice[];
+}
+
+interface BallotSubmissionResult {
+  success: boolean;
+  alreadyVoted?: boolean;
+  ballotId?: string;
+  confirmationToken?: string;
+  message: string;
+  votedAt?: string;
+}
+
+interface VotingStatus {
   electionId: string;
   electionTitle: string;
-  submittedAt: string;
-  status: string;
+  electionStatus: string;
+  startTime: string;
+  endTime: string;
+  isEligible: boolean;
+  hasVoted: boolean;
+  votedAt: string | null;
 }
 
 export const votesApi = {
-  async submitVote(data: VoteSubmission): Promise<ApiResponse<Vote>> {
-    return apiClient.post('/votes', data);
+  async submitBallot(data: SubmitBallotData): Promise<ApiResponse<BallotSubmissionResult>> {
+    return apiClient.post('/voting/ballot', data);
   },
 
-  async getVoteHistory(): Promise<ApiResponse<VoteHistory[]>> {
-    return apiClient.get('/votes/history');
+  async getVotingStatus(electionId: string): Promise<ApiResponse<VotingStatus>> {
+    return apiClient.get(`/voting/status/${electionId}`);
   },
 
-  async getVoteConfirmation(electionId: string): Promise<ApiResponse<VoteConfirmation>> {
-    return apiClient.get(`/votes/confirmation/${electionId}`);
+  async getVotingHistory(page?: number, limit?: number): Promise<ApiResponse<{
+    items: VoteHistory[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>> {
+    return apiClient.get('/voting/history', {
+      params: { page: page || 1, limit: limit || 20 },
+    });
   },
 };

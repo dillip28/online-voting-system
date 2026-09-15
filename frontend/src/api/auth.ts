@@ -2,23 +2,37 @@ import { apiClient } from './client';
 import type { ApiResponse, User } from '@/types';
 
 interface LoginResponse {
-  user: User;
   token: string;
-  refreshToken?: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    profile: {
+      fullName: string;
+      studentId: string;
+      department: string;
+      isVerified: boolean;
+    } | null;
+  };
 }
 
 interface RegisterData {
   email: string;
   password: string;
-  fullName: string;
-  phone?: string;
-  studentId?: string;
+  profile: {
+    fullName: string;
+    studentId: string;
+    department: string;
+    yearOfStudy?: number;
+    phone?: string;
+  };
 }
 
 interface UpdateProfileData {
   fullName?: string;
   phone?: string;
-  avatar?: string;
+  department?: string;
+  yearOfStudy?: number;
 }
 
 interface ChangePasswordData {
@@ -32,7 +46,12 @@ export const authApi = {
   },
 
   async register(data: RegisterData): Promise<ApiResponse<{ user: User; message: string }>> {
-    return apiClient.post('/auth/register', data);
+    return apiClient.post('/auth/register', {
+      email: data.email,
+      password: data.password,
+      role: 'voter',
+      profile: data.profile,
+    });
   },
 
   async logout(): Promise<ApiResponse<{ message: string }>> {
