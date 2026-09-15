@@ -8,7 +8,6 @@ describe('Election API Integration', () => {
 
   describe('Election Lifecycle', () => {
     it('should create, open, close, and publish results', async () => {
-      // Create election
       const mockElection = {
         id: 'election-1',
         title: 'Test Election',
@@ -89,32 +88,45 @@ describe('Election API Integration', () => {
         id: 'election-1',
         title: 'Test Election',
         status: 'results_published',
+        settings: {},
         positions: [
-          { id: 'pos-1', title: 'President', displayOrder: 1 },
+          { id: 'pos-1', title: 'President', description: null, displayOrder: 1 },
         ],
-        _count: { ballots: 100 },
       };
 
       const mockCandidates = [
-        { id: 'c-1', name: 'Alice', party: 'Party A', photoUrl: null },
-        { id: 'c-2', name: 'Bob', party: 'Party B', photoUrl: null },
+        { id: 'c-1', name: 'Alice', party: 'Party A', photoUrl: null, status: 'approved' },
+        { id: 'c-2', name: 'Bob', party: 'Party B', photoUrl: null, status: 'approved' },
       ];
 
-      const mockResults = [
-        { candidateId: 'c-1', voteCount: 60 },
-        { candidateId: 'c-2', voteCount: 40 },
+      const mockVoteCounts = [
+        { positionId: 'pos-1', candidateId: 'c-1', _count: { id: 60 } },
+        { positionId: 'pos-1', candidateId: 'c-2', _count: { id: 40 } },
       ];
 
       mockPrisma.election.findUnique.mockResolvedValue(mockElection);
+      mockPrisma.ballotChoice.groupBy.mockResolvedValue(mockVoteCounts);
+      mockPrisma.ballot.count.mockResolvedValue(100);
+      mockPrisma.electionVoterEligibility.aggregate.mockResolvedValue({ _count: 200 });
       mockPrisma.candidate.findMany.mockResolvedValue(mockCandidates);
-      mockPrisma.resultsCache.findMany.mockResolvedValue(mockResults);
+      mockPrisma.resultsCache.upsert.mockResolvedValue({});
+      mockPrisma.resultsCache.findFirst.mockResolvedValue(null);
+      mockPrisma.resultsCache.create.mockResolvedValue({});
 
-      const { electionService } = await import('../../src/services/election.service');
-      const results = await electionService.getResults('election-1');
+      const { resultsService } = await import('../../src/services/results.service');
+      const results = await resultsService.computeAndCacheResults('election-1');
 
       expect(results.totalVotesCast).toBe(100);
+      expect(results.totalEligibleVoters).toBe(200);
+      expect(results.turnoutPercentage).toBe(50);
       expect(results.positions).toHaveLength(1);
       expect(results.positions[0].candidates).toHaveLength(2);
+      expect(results.positions[0].candidates[0].name).toBe('Alice');
+      expect(results.positions[0].candidates[0].votes).toBe(60);
+      expect(results.positions[0].candidates[0].isWinner).toBe(true);
+      expect(results.positions[0].candidates[1].name).toBe('Bob');
+      expect(results.positions[0].candidates[1].votes).toBe(40);
+      expect(results.positions[0].candidates[1].isWinner).toBe(false);
     });
   });
 });

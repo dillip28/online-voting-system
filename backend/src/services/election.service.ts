@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma';
 import { AppError } from '../middleware/error-handler';
+import { resultsService } from './results.service';
 import {
   CreateElectionInput,
   UpdateElectionInput,
@@ -301,90 +302,8 @@ export class ElectionService {
     return updated;
   }
 
-  async getResults(id: string) {
-    const election = await prisma.election.findUnique({
-      where: { id },
-      include: {
-        positions: {
-          orderBy: { displayOrder: 'asc' },
-        },
-        _count: {
-          select: { ballots: true },
-        },
-      },
-    });
-
-    if (!election) {
-      throw new AppError(404, 'NOT_FOUND', 'Election not found');
-    }
-
-    // Check result visibility
-    const settings = election.settings as any;
-    const visibility = settings?.resultVisibility || 'after_close';
-
-    if (visibility === 'hidden') {
-      throw new AppError(403, 'FORBIDDEN', 'Results are hidden');
-    }
-
-    if (visibility === 'admin_only') {
-      // Will be checked in route middleware
-    }
-
-    // Get results for each position
-    const results = await Promise.all(
-      election.positions.map(async (position) => {
-        const candidates = await prisma.candidate.findMany({
-          where: {
-            electionId: id,
-            positionId: position.id,
-            status: 'approved',
-          },
-        });
-
-        const resultsCache = await prisma.resultsCache.findMany({
-          where: {
-            electionId: id,
-            positionId: position.id,
-          },
-        });
-
-        const totalVotes = resultsCache.reduce((sum, r) => sum + r.voteCount, 0);
-
-        return {
-          position: {
-            id: position.id,
-            title: position.title,
-            description: position.description,
-          },
-          candidates: candidates.map((candidate) => {
-            const result = resultsCache.find((r) => r.candidateId === candidate.id);
-            const voteCount = result?.voteCount || 0;
-            const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
-
-            return {
-              id: candidate.id,
-              name: candidate.name,
-              party: candidate.party,
-              photoUrl: candidate.photoUrl,
-              voteCount,
-              percentage: Math.round(percentage * 100) / 100,
-            };
-          }),
-          totalVotes,
-        };
-      })
-    );
-
-    return {
-      election: {
-        id: election.id,
-        title: election.title,
-        status: election.status,
-      },
-      totalEligibleVoters: 0, // Will be calculated separately
-      totalVotesCast: election._count.ballots,
-      positions: results,
-    };
+  async getResults(id: string, userRole?: string) {
+    return resultsService.getResults(id, userRole);
   }
 
   async getVoters(electionId: string, query: { voted?: boolean; page: number; limit: number }) {

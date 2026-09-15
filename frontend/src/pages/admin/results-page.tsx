@@ -26,21 +26,66 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { mockElections } from '@/mocks/elections';
-import { mockResults } from '@/mocks/results';
+import { apiClient } from '@/api/client';
 import type { Result } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
 const PIE_COLORS = ['#123B5D', '#167D72', '#D97706', '#DC2626', '#5380AF', '#1DA597'];
 
+interface ElectionOption {
+  id: string;
+  title: string;
+  status: string;
+  totalVotes: number;
+  eligibleVoters: number;
+}
+
+interface ElectionResultResponse {
+  electionId: string;
+  electionTitle: string;
+  electionStatus: string;
+  totalEligibleVoters: number;
+  totalVotesCast: number;
+  turnoutPercentage: number;
+  positions: {
+    positionId: string;
+    positionTitle: string;
+    positionDescription: string | null;
+    candidates: {
+      candidateId: string | null;
+      name: string;
+      photoUrl: string | null;
+      party: string | null;
+      votes: number;
+      percentage: number;
+      rank: number;
+      isWinner: boolean;
+    }[];
+    totalVotes: number;
+    notaVotes: number;
+  }[];
+}
+
 export default function ResultsPage() {
   const [selectedElectionId, setSelectedElectionId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<Result | null>(null);
+  const [isLoadingElections, setIsLoadingElections] = useState(true);
+  const [electionOptions, setElectionOptions] = useState<ElectionOption[]>([]);
+  const [result, setResult] = useState<ElectionResultResponse | null>(null);
 
-  const electionOptions = mockElections
-    .filter((e) => ['closed', 'results_published'].includes(e.status) || e.votesCast > 0)
-    .map((e) => ({ value: e.id, label: e.title }));
+  useEffect(() => {
+    const fetchElections = async () => {
+      try {
+        const res = await apiClient.get<{ success: boolean; data: { items: ElectionOption[] } }>('/admin/elections-with-results');
+        setElectionOptions(res.data?.items || []);
+      } catch {
+        setElectionOptions([]);
+      } finally {
+        setIsLoadingElections(false);
+      }
+    };
+    fetchElections();
+  }, []);
 
   useEffect(() => {
     if (!selectedElectionId) {
@@ -48,41 +93,46 @@ export default function ResultsPage() {
       return;
     }
 
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      const found = mockResults.find((r) => r.electionId === selectedElectionId) ?? null;
-      setResult(found);
-      setIsLoading(false);
-    }, 600);
+    const fetchResults = async () => {
+      setIsLoading(true);
+      try {
+        const res = await apiClient.get<{ success: boolean; data: ElectionResultResponse }>(`/elections/${selectedElectionId}/results`);
+        setResult(res.data || null);
+      } catch {
+        setResult(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    fetchResults();
   }, [selectedElectionId]);
 
-  const election = mockElections.find((e) => e.id === selectedElectionId);
+  const selectedElection = electionOptions.find((e) => e.id === selectedElectionId);
 
-  const overallStats = election
+  const overallStats = selectedElection
     ? {
-        totalEligible: election.eligibleVoters,
-        votesCast: election.votesCast,
-        turnout:
-          election.eligibleVoters > 0
-            ? ((election.votesCast / election.eligibleVoters) * 100).toFixed(1)
-            : '0',
-        invalidVotes: Math.floor(election.votesCast * 0.02),
+        totalEligible: result?.totalEligibleVoters || selectedElection.eligibleVoters || 0,
+        votesCast: result?.totalVotesCast || selectedElection.totalVotes || 0,
+        turnout: result?.turnoutPercentage?.toFixed(1) || '0',
       }
     : null;
 
-  const chartData =
-    result?.candidates.map((c) => ({
-      name: c.name.length > 15 ? c.name.slice(0, 15) + '...' : c.name,
-      votes: c.votes,
-    })) ?? [];
+  // Flatten all candidates across positions for charts
+  const allCandidates =
+    result?.positions.flatMap((p) =>
+      p.candidates.filter((c) => c.candidateId !== null)
+    ) ?? [];
 
-  const pieData =
-    result?.candidates.map((c) => ({
-      name: c.name,
-      value: c.votes,
-    })) ?? [];
+  const chartData = allCandidates.map((c) => ({
+    name: c.name.length > 15 ? c.name.slice(0, 15) + '...' : c.name,
+    votes: c.votes,
+  }));
+
+  const pieData = allCandidates.map((c) => ({
+    name: c.name,
+    value: c.votes,
+  }));
 
   return (
     <AdminLayout>
@@ -97,7 +147,10 @@ export default function ResultsPage() {
         <Card className="!p-4">
           <Select
             label="Select Election"
-            options={electionOptions}
+            options={electionOptions.map((e) => ({
+              value: e.id,
+              label: `${e.title} (${e.status === 'results_published' ? 'Published' : e.status === 'closed' ? 'Closed' : 'Counting'})`,
+            }))}
             placeholder="Choose an election to view results"
             value={selectedElectionId}
             onChange={(e) => setSelectedElectionId(e.target.value)}
@@ -110,7 +163,7 @@ export default function ResultsPage() {
             title="No election selected"
             description="Select an election from the dropdown above to view its results."
           />
-        ) : isLoading ? (
+        ) : isLoading || isLoadingElections ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
           </div>
@@ -123,7 +176,7 @@ export default function ResultsPage() {
         ) : (
           <div className="space-y-6">
             {overallStats && (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Card>
                   <div className="flex items-center gap-4">
                     <div className="rounded-lg bg-primary-50 p-3 border border-primary-100">
@@ -161,129 +214,127 @@ export default function ResultsPage() {
                     </div>
                   </div>
                 </Card>
+              </div>
+            )}
+
+            {allCandidates.length > 0 && (
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card>
-                  <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-danger-50 p-3 border border-danger-500/20">
-                      <Trophy className="h-5 w-5 text-danger-500" />
-                    </div>
-                    <div>
-                      <p className="text-[13px] text-surface-400">Invalid Votes</p>
-                      <p className="text-[22px] font-semibold text-surface-800">
-                        {overallStats.invalidVotes.toLocaleString()}
-                      </p>
-                    </div>
+                  <h3 className="mb-4 text-[16px] font-semibold text-surface-800">Candidate Votes</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#D9E0E7" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#667085' }} />
+                        <YAxis tick={{ fontSize: 12, fill: '#667085' }} />
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: '1px solid #D9E0E7',
+                            fontSize: '14px',
+                          }}
+                        />
+                        <Bar dataKey="votes" fill="#123B5D" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+
+                <Card>
+                  <h3 className="mb-4 text-[16px] font-semibold text-surface-800">Vote Distribution</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={4}
+                          dataKey="value"
+                          label={({ name, percent }) =>
+                            `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                          }
+                        >
+                          {pieData.map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={PIE_COLORS[index % PIE_COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 </Card>
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <Card>
-                <h3 className="mb-4 text-[16px] font-semibold text-surface-800">Candidate Votes</h3>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#D9E0E7" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#667085' }} />
-                      <YAxis tick={{ fontSize: 12, fill: '#667085' }} />
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: '8px',
-                          border: '1px solid #D9E0E7',
-                          fontSize: '14px',
-                        }}
-                      />
-                      <Bar dataKey="votes" fill="#123B5D" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+            {result.positions.map((position) => (
+              <Card key={position.positionId}>
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-[16px] font-semibold text-surface-800">
+                    {position.positionTitle}
+                  </h3>
+                  <span className="text-[13px] text-surface-400">
+                    {position.totalVotes} total vote{position.totalVotes !== 1 ? 's' : ''}
+                  </span>
                 </div>
-              </Card>
-
-              <Card>
-                <h3 className="mb-4 text-[16px] font-semibold text-surface-800">Vote Distribution</h3>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={4}
-                        dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                        }
-                      >
-                        {pieData.map((_, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={PIE_COLORS[index % PIE_COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </div>
-
-            <Card>
-              <h3 className="mb-4 text-[16px] font-semibold text-surface-800">Candidate Results</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">Rank</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Party</TableHead>
-                    <TableHead className="text-right">Votes</TableHead>
-                    <TableHead className="text-right">Percentage</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {result.candidates
-                    .sort((a, b) => a.rank - b.rank)
-                    .map((c) => (
-                      <TableRow key={c.candidateId}>
-                        <TableCell>
-                          <span
-                            className={cn(
-                              'flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold',
-                              c.rank === 1
-                                ? 'bg-primary-50 text-primary-700 border border-primary-200'
-                                : c.rank === 2
-                                ? 'bg-surface-100 text-surface-600 border border-surface-200'
-                                : c.rank === 3
-                                ? 'bg-warning-50 text-warning-700 border border-warning-500/20'
-                                : 'bg-surface-50 text-surface-500 border border-surface-200'
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Rank</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Party</TableHead>
+                      <TableHead className="text-right">Votes</TableHead>
+                      <TableHead className="text-right">Percentage</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {position.candidates
+                      .sort((a, b) => a.rank - b.rank)
+                      .map((c) => (
+                        <TableRow key={c.candidateId || 'nota'}>
+                          <TableCell>
+                            <span
+                              className={cn(
+                                'flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold',
+                                c.rank === 1
+                                  ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                                  : c.rank === 2
+                                  ? 'bg-surface-100 text-surface-600 border border-surface-200'
+                                  : c.rank === 3
+                                  ? 'bg-warning-50 text-warning-700 border border-warning-500/20'
+                                  : 'bg-surface-50 text-surface-500 border border-surface-200'
+                              )}
+                            >
+                              {c.rank}
+                            </span>
+                          </TableCell>
+                          <TableCell className="font-medium text-surface-800">{c.name}</TableCell>
+                          <TableCell className="text-surface-500 text-[14px]">{c.party ?? (c.candidateId === null ? 'NOTA' : 'Independent')}</TableCell>
+                          <TableCell className="text-right font-medium text-surface-700">
+                            {c.votes.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right text-[14px] text-surface-600">{c.percentage.toFixed(1)}%</TableCell>
+                          <TableCell className="text-center">
+                            {c.isWinner && (
+                              <Badge variant="success">
+                                <Trophy className="mr-1 inline h-3 w-3" />
+                                Winner
+                              </Badge>
                             )}
-                          >
-                            {c.rank}
-                          </span>
-                        </TableCell>
-                        <TableCell className="font-medium text-surface-800">{c.name}</TableCell>
-                        <TableCell className="text-surface-500 text-[14px]">{c.party ?? 'Independent'}</TableCell>
-                        <TableCell className="text-right font-medium text-surface-700">
-                          {c.votes.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right text-[14px] text-surface-600">{c.percentage.toFixed(1)}%</TableCell>
-                        <TableCell className="text-center">
-                          {c.isWinner && (
-                            <Badge variant="success">
-                              <Trophy className="mr-1 inline h-3 w-3" />
-                              Winner
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </Card>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            ))}
           </div>
         )}
       </div>

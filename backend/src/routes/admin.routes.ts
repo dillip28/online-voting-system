@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
+import { resultsService } from '../services/results.service';
 import prisma from '../lib/prisma';
 
 const router = Router();
@@ -12,71 +13,38 @@ router.get(
   authorize(['admin', 'super_admin']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const [
-        totalVoters,
-        verifiedVoters,
-        activeElections,
-        upcomingElections,
-        completedElections,
-        totalBallots,
-        recentElections,
-        recentAuditLogs,
-      ] = await Promise.all([
-        prisma.voterProfile.count(),
-        prisma.voterProfile.count({ where: { isVerified: true } }),
-        prisma.election.count({ where: { status: 'open' } }),
-        prisma.election.count({ where: { status: 'scheduled' } }),
-        prisma.election.count({ where: { status: 'results_published' } }),
-        prisma.ballot.count(),
-        prisma.election.findMany({
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-          include: {
-            _count: { select: { ballots: true } },
-          },
-        }),
-        prisma.auditLog.findMany({
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-          include: {
-            actor: {
-              include: { profile: true },
-            },
-          },
-        }),
-      ]);
+      const data = await resultsService.getDashboardStats();
+      res.json({ success: true, data });
+    } catch (error) {
+      throw error;
+    }
+  }
+);
 
-      const turnoutPercentage =
-        totalVoters > 0 ? Math.round((totalBallots / totalVoters) * 10000) / 100 : 0;
+// GET /admin/dashboard/stats (alias for frontend compatibility)
+router.get(
+  '/dashboard/stats',
+  authenticate,
+  authorize(['admin', 'super_admin']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const data = await resultsService.getDashboardStats();
+      res.json({ success: true, data: data.stats });
+    } catch (error) {
+      throw error;
+    }
+  }
+);
 
-      res.json({
-        success: true,
-        data: {
-          stats: {
-            totalVoters,
-            verifiedVoters,
-            activeElections,
-            upcomingElections,
-            completedElections,
-            totalVotesCast: totalBallots,
-            turnoutPercentage,
-          },
-          recentElections: recentElections.map((e) => ({
-            id: e.id,
-            title: e.title,
-            status: e.status,
-            totalVotes: e._count.ballots,
-          })),
-          recentAuditLogs: recentAuditLogs.map((log) => ({
-            id: log.id,
-            action: log.action,
-            actorEmail: log.actor?.email || 'System',
-            actorName: log.actor?.profile?.fullName || 'System',
-            targetType: log.targetType,
-            createdAt: log.createdAt,
-          })),
-        },
-      });
+// GET /admin/elections-with-results (for results page dropdown)
+router.get(
+  '/elections-with-results',
+  authenticate,
+  authorize(['admin', 'super_admin']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const elections = await resultsService.getElectionsWithResults();
+      res.json({ success: true, data: elections });
     } catch (error) {
       throw error;
     }
@@ -153,8 +121,6 @@ router.get(
   authenticate,
   authorize(['admin', 'super_admin']),
   async (req: AuthRequest, res: Response) => {
-    // For now, return default settings
-    // In production, this would be stored in a settings table
     res.json({
       success: true,
       data: {
@@ -176,8 +142,6 @@ router.put(
   authenticate,
   authorize(['super_admin']),
   async (req: AuthRequest, res: Response) => {
-    // For now, just acknowledge the update
-    // In production, this would update a settings table
     res.json({
       success: true,
       data: {

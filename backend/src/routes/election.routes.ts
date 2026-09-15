@@ -144,7 +144,7 @@ router.get(
   async (req: AuthRequest, res: Response) => {
     try {
       const id = req.params.id as string;
-      const result = await electionService.getResults(id);
+      const result = await electionService.getResults(id, req.user!.role);
       res.json({ success: true, data: result });
     } catch (error) {
       throw error;

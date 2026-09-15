@@ -26,9 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { mockElections } from '@/mocks/elections';
-import { mockUsers } from '@/mocks/users';
-import { mockAuditLogs } from '@/mocks/audit-logs';
+import { apiClient } from '@/api/client';
 import AdminLayout from '@/layouts/admin-layout';
 
 const CHART_COLORS = {
@@ -44,97 +42,57 @@ const CHART_COLORS = {
 const STATUS_COLORS: Record<string, string> = {
   draft: '#94A3B8',
   scheduled: '#2563EB',
-  active: '#16A34A',
+  open: '#16A34A',
   closed: '#DC2626',
   results_published: '#167D72',
   archived: '#667085',
 };
 
+interface DashboardData {
+  stats: {
+    totalVoters: number;
+    verifiedVoters: number;
+    activeElections: number;
+    upcomingElections: number;
+    completedElections: number;
+    totalVotesCast: number;
+    turnoutPercentage: number;
+  };
+  recentElections: {
+    id: string;
+    title: string;
+    status: string;
+    totalVotes: number;
+  }[];
+  recentAuditLogs: {
+    id: string;
+    action: string;
+    actorEmail: string;
+    actorName: string;
+    targetType: string;
+    createdAt: string;
+  }[];
+  votesPerElection: { name: string; votes: number }[];
+  statusDistribution: Record<string, number>;
+}
+
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    const fetchDashboard = async () => {
+      try {
+        const res = await apiClient.get<{ success: boolean; data: DashboardData }>('/admin/dashboard');
+        setData(res.data || null);
+      } catch {
+        setData(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDashboard();
   }, []);
-
-  const elections = mockElections;
-  const voters = mockUsers.filter((u) => u.role === 'voter');
-
-  const totalVotes = elections.reduce((sum, e) => sum + e.votesCast, 0);
-  const totalEligible = elections.reduce((sum, e) => sum + e.eligibleVoters, 0);
-  const participationRate = totalEligible > 0 ? Math.round((totalVotes / totalEligible) * 100) : 0;
-
-  const stats = [
-    {
-      label: 'Total Elections',
-      value: elections.length,
-      icon: Vote,
-      color: 'text-primary-600',
-      bg: 'bg-primary-50',
-    },
-    {
-      label: 'Active Elections',
-      value: elections.filter((e) => e.status === 'active').length,
-      icon: Calendar,
-      color: 'text-success-600',
-      bg: 'bg-success-50',
-    },
-    {
-      label: 'Upcoming',
-      value: elections.filter((e) => e.status === 'scheduled').length,
-      icon: Clock,
-      color: 'text-info-600',
-      bg: 'bg-info-50',
-    },
-    {
-      label: 'Completed',
-      value: elections.filter((e) => ['closed', 'results_published'].includes(e.status)).length,
-      icon: CheckCircle2,
-      color: 'text-accent-600',
-      bg: 'bg-accent-50',
-    },
-    {
-      label: 'Total Voters',
-      value: voters.length,
-      icon: Users,
-      color: 'text-warning-600',
-      bg: 'bg-warning-50',
-    },
-    {
-      label: 'Total Votes',
-      value: totalVotes.toLocaleString(),
-      icon: BarChart3,
-      color: 'text-danger-600',
-      bg: 'bg-danger-50',
-    },
-  ];
-
-  const votesPerElection = elections
-    .filter((e) => e.votesCast > 0)
-    .map((e) => ({
-      name: e.title.length > 18 ? e.title.slice(0, 18) + '…' : e.title,
-      votes: e.votesCast,
-    }));
-
-  const statusDistribution = [
-    { name: 'Draft', value: elections.filter((e) => e.status === 'draft').length },
-    { name: 'Scheduled', value: elections.filter((e) => e.status === 'scheduled').length },
-    { name: 'Active', value: elections.filter((e) => e.status === 'active').length },
-    { name: 'Closed', value: elections.filter((e) => e.status === 'closed').length },
-    { name: 'Published', value: elections.filter((e) => e.status === 'results_published').length },
-  ].filter((d) => d.value > 0);
-
-  const participationOverTime = [
-    { month: 'Apr', voters: 1200, votes: 890 },
-    { month: 'May', voters: 1350, votes: 1020 },
-    { month: 'Jun', voters: 1100, votes: 780 },
-    { month: 'Jul', voters: 1450, votes: 1150 },
-    { month: 'Aug', voters: 1600, votes: 1380 },
-    { month: 'Sep', voters: 1800, votes: 1560 },
-  ];
-
-  const recentActivity = mockAuditLogs.slice(0, 5);
 
   if (isLoading) {
     return (
@@ -145,6 +103,64 @@ export default function DashboardPage() {
       </AdminLayout>
     );
   }
+
+  const stats = data
+    ? [
+        {
+          label: 'Total Elections',
+          value: (data.stats.activeElections || 0) + (data.stats.upcomingElections || 0) + (data.stats.completedElections || 0),
+          icon: Vote,
+          color: 'text-primary-600',
+          bg: 'bg-primary-50',
+        },
+        {
+          label: 'Active Elections',
+          value: data.stats.activeElections,
+          icon: Calendar,
+          color: 'text-success-600',
+          bg: 'bg-success-50',
+        },
+        {
+          label: 'Upcoming',
+          value: data.stats.upcomingElections,
+          icon: Clock,
+          color: 'text-info-600',
+          bg: 'bg-info-50',
+        },
+        {
+          label: 'Completed',
+          value: data.stats.completedElections,
+          icon: CheckCircle2,
+          color: 'text-accent-600',
+          bg: 'bg-accent-50',
+        },
+        {
+          label: 'Total Voters',
+          value: data.stats.totalVoters,
+          icon: Users,
+          color: 'text-warning-600',
+          bg: 'bg-warning-50',
+        },
+        {
+          label: 'Total Votes',
+          value: data.stats.totalVotesCast.toLocaleString(),
+          icon: BarChart3,
+          color: 'text-danger-600',
+          bg: 'bg-danger-50',
+        },
+      ]
+    : [];
+
+  const participationRate = data?.stats.turnoutPercentage || 0;
+
+  const statusDistribution = data?.statusDistribution
+    ? Object.entries(data.statusDistribution).map(([key, value]) => ({
+        name: key === 'results_published' ? 'Published' : key.charAt(0).toUpperCase() + key.slice(1),
+        value,
+      })).filter((d) => d.value > 0)
+    : [];
+
+  const recentActivity = data?.recentAuditLogs || [];
 
   return (
     <AdminLayout>
@@ -180,7 +196,7 @@ export default function DashboardPage() {
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-100">
             <div
               className="h-full rounded-full bg-primary-500 transition-all"
-              style={{ width: `${participationRate}%` }}
+              style={{ width: `${Math.min(participationRate, 100)}%` }}
             />
           </div>
         </Card>
@@ -190,7 +206,7 @@ export default function DashboardPage() {
             <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Votes Per Election</h3>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={votesPerElection} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <BarChart data={data?.votesPerElection || []} layout="vertical" margin={{ left: 10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#EDF0F4" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 12, fill: '#667085' }} axisLine={false} tickLine={false} />
                   <YAxis
@@ -261,69 +277,37 @@ export default function DashboardPage() {
         </div>
 
         <Card>
-          <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Voter Participation Over Time</h3>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={participationOverTime}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#EDF0F4" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#667085' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: '#667085' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: '6px',
-                    border: '1px solid #D9E0E7',
-                    fontSize: '13px',
-                    boxShadow: 'none',
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px', color: '#667085' }} />
-                <Line
-                  type="monotone"
-                  dataKey="voters"
-                  stroke={CHART_COLORS.primary}
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: CHART_COLORS.primary }}
-                  activeDot={{ r: 5 }}
-                  name="Eligible Voters"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="votes"
-                  stroke={CHART_COLORS.accent}
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: CHART_COLORS.accent }}
-                  activeDot={{ r: 5 }}
-                  name="Votes Cast"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card>
           <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Recent Activity</h3>
           <div className="space-y-3">
-            {recentActivity.map((log) => (
-              <div
-                key={log.id}
-                className="flex items-start gap-3 rounded-lg border border-surface-100 p-3.5 transition-colors hover:bg-surface-50"
-              >
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50">
-                  <Activity className="h-4 w-4 text-primary-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-surface-900">{log.userName}</span>
-                    <span className="text-sm text-surface-500">{log.action}</span>
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-surface-400 text-center py-4">No recent activity</p>
+            ) : (
+              recentActivity.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-start gap-3 rounded-lg border border-surface-100 p-3.5 transition-colors hover:bg-surface-50"
+                >
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50">
+                    <Activity className="h-4 w-4 text-primary-500" />
                   </div>
-                  <p className="mt-0.5 truncate text-sm text-surface-600">{log.details}</p>
-                  <p className="mt-1 text-xs text-surface-400">
-                    {new Date(log.createdAt).toLocaleString()}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-surface-900">{log.actorName}</span>
+                      <span className="text-sm text-surface-500">
+                        {log.action.replace(/_/g, ' ').toLowerCase()}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-sm text-surface-600">
+                      {log.targetType}
+                    </p>
+                    <p className="mt-1 text-xs text-surface-400">
+                      {new Date(log.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <StatusBadge status="draft" className="shrink-0" />
                 </div>
-                <StatusBadge status="draft" className="shrink-0" />
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>

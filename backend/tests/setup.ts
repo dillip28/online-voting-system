@@ -75,11 +75,15 @@ const mockPrisma = {
     findMany: vi.fn(),
     create: vi.fn(),
     createMany: vi.fn(),
+    groupBy: vi.fn(),
   },
   resultsCache: {
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    upsert: vi.fn(),
   },
   auditLog: {
     findUnique: vi.fn(),
