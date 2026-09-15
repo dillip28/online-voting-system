@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,7 +16,6 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -59,91 +57,67 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur-sm">
+    <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
-        <CardDescription className="text-muted-foreground">
+        <CardTitle className="text-[20px] font-bold tracking-tight text-surface-900">
+          Welcome back
+        </CardTitle>
+        <CardDescription className="text-sm text-surface-500">
           Sign in to your account to continue
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={cn('pl-10', errors.email && 'border-destructive focus-visible:ring-destructive')}
-              />
-            </div>
-            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-          </div>
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            icon={Mail}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={errors.email}
+          />
 
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={cn('pl-10 pr-10', errors.password && 'border-destructive focus-visible:ring-destructive')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
-          </div>
+          <Input
+            id="password"
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            icon={Lock}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
+          />
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember"
-                checked={rememberMe}
-                onCheckedChange={(val) => setRememberMe(val === true)}
-              />
-              <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                Remember me
-              </label>
-            </div>
+            <Checkbox
+              id="remember"
+              label="Remember me"
+              checked={rememberMe}
+              onCheckedChange={(val) => setRememberMe(val === true)}
+            />
             <Link
               to="/forgot-password"
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-sm font-medium text-primary-500 hover:text-primary-600"
             >
               Forgot password?
             </Link>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Sign In'
-            )}
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full"
+            disabled={loading}
+            isLoading={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-surface-500">
             Don&apos;t have an account?{' '}
-            <Link to="/register" className="font-medium text-primary hover:underline">
+            <Link to="/register" className="font-medium text-primary-500 hover:text-primary-600">
               Register
             </Link>
           </p>

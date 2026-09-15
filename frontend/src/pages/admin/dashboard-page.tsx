@@ -31,13 +31,23 @@ import { mockUsers } from '@/mocks/users';
 import { mockAuditLogs } from '@/mocks/audit-logs';
 import AdminLayout from '@/layouts/admin-layout';
 
+const CHART_COLORS = {
+  primary: '#123B5D',
+  accent: '#167D72',
+  surface: '#94A3B8',
+  warning: '#D97706',
+  danger: '#DC2626',
+  info: '#2563EB',
+  success: '#16A34A',
+};
+
 const STATUS_COLORS: Record<string, string> = {
-  draft: '#94a3b8',
-  scheduled: '#3b82f6',
-  active: '#22c55e',
-  closed: '#ef4444',
-  results_published: '#8b5cf6',
-  archived: '#6b7280',
+  draft: '#94A3B8',
+  scheduled: '#2563EB',
+  active: '#16A34A',
+  closed: '#DC2626',
+  results_published: '#167D72',
+  archived: '#667085',
 };
 
 export default function DashboardPage() {
@@ -61,49 +71,49 @@ export default function DashboardPage() {
       value: elections.length,
       icon: Vote,
       color: 'text-primary-600',
-      bg: 'bg-primary-100',
+      bg: 'bg-primary-50',
     },
     {
       label: 'Active Elections',
       value: elections.filter((e) => e.status === 'active').length,
       icon: Calendar,
       color: 'text-success-600',
-      bg: 'bg-success-100',
+      bg: 'bg-success-50',
     },
     {
-      label: 'Upcoming Elections',
+      label: 'Upcoming',
       value: elections.filter((e) => e.status === 'scheduled').length,
       icon: Clock,
       color: 'text-info-600',
-      bg: 'bg-info-100',
+      bg: 'bg-info-50',
     },
     {
-      label: 'Completed Elections',
+      label: 'Completed',
       value: elections.filter((e) => ['closed', 'results_published'].includes(e.status)).length,
       icon: CheckCircle2,
-      color: 'text-secondary-600',
-      bg: 'bg-secondary-100',
+      color: 'text-accent-600',
+      bg: 'bg-accent-50',
     },
     {
       label: 'Total Voters',
       value: voters.length,
       icon: Users,
       color: 'text-warning-600',
-      bg: 'bg-warning-100',
+      bg: 'bg-warning-50',
     },
     {
       label: 'Total Votes',
       value: totalVotes.toLocaleString(),
       icon: BarChart3,
       color: 'text-danger-600',
-      bg: 'bg-danger-100',
+      bg: 'bg-danger-50',
     },
   ];
 
   const votesPerElection = elections
     .filter((e) => e.votesCast > 0)
     .map((e) => ({
-      name: e.title.length > 20 ? e.title.slice(0, 20) + '...' : e.title,
+      name: e.title.length > 18 ? e.title.slice(0, 18) + '…' : e.title,
       votes: e.votesCast,
     }));
 
@@ -130,7 +140,7 @@ export default function DashboardPage() {
     return (
       <AdminLayout>
         <div className="flex h-96 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
         </div>
       </AdminLayout>
     );
@@ -138,10 +148,10 @@ export default function DashboardPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-[22px] font-semibold text-surface-900">Dashboard</h1>
+          <p className="mt-1 text-sm text-surface-500">
             Overview of your voting system statistics and activity.
           </p>
         </div>
@@ -149,13 +159,13 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {stats.map((stat) => (
             <Card key={stat.label}>
-              <div className="flex items-center gap-4">
-                <div className={cn('rounded-lg p-3', stat.bg)}>
+              <div className="flex items-center gap-3">
+                <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', stat.bg)}>
                   <stat.icon className={cn('h-5 w-5', stat.color)} />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-surface-500">{stat.label}</p>
+                  <p className="text-xl font-semibold text-surface-900">{stat.value}</p>
                 </div>
               </div>
             </Card>
@@ -163,13 +173,13 @@ export default function DashboardPage() {
         </div>
 
         <Card>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Participation Rate</h3>
-            <span className="text-2xl font-bold text-primary-600">{participationRate}%</span>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-[15px] font-semibold text-surface-900">Participation Rate</h3>
+            <span className="text-xl font-semibold text-primary-600">{participationRate}%</span>
           </div>
-          <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-100">
             <div
-              className="h-full rounded-full bg-primary-600 transition-all"
+              className="h-full rounded-full bg-primary-500 transition-all"
               style={{ width: `${participationRate}%` }}
             />
           </div>
@@ -177,33 +187,36 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card>
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Votes Per Election</h3>
+            <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Votes Per Election</h3>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={votesPerElection} layout="vertical" margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis type="number" tick={{ fontSize: 12 }} />
+                <BarChart data={votesPerElection} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EDF0F4" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 12, fill: '#667085' }} axisLine={false} tickLine={false} />
                   <YAxis
                     dataKey="name"
                     type="category"
-                    width={150}
-                    tick={{ fontSize: 12 }}
+                    width={140}
+                    tick={{ fontSize: 12, fill: '#667085' }}
+                    axisLine={false}
+                    tickLine={false}
                   />
                   <Tooltip
                     contentStyle={{
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      borderRadius: '6px',
+                      border: '1px solid #D9E0E7',
+                      fontSize: '13px',
+                      boxShadow: 'none',
                     }}
                   />
-                  <Bar dataKey="votes" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="votes" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
           <Card>
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Election Status Distribution</h3>
+            <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Election Status Distribution</h3>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -211,9 +224,9 @@ export default function DashboardPage() {
                     data={statusDistribution}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={4}
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={3}
                     dataKey="value"
                     label={({ name, value }) => `${name}: ${value}`}
                   >
@@ -224,13 +237,23 @@ export default function DashboardPage() {
                       return (
                         <Cell
                           key={entry.name}
-                          fill={STATUS_COLORS[statusKey] || '#94a3b8'}
+                          fill={STATUS_COLORS[statusKey] || '#94A3B8'}
+                          stroke="none"
                         />
                       );
                     })}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '6px',
+                      border: '1px solid #D9E0E7',
+                      fontSize: '13px',
+                      boxShadow: 'none',
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{ fontSize: '12px', color: '#667085' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -238,35 +261,38 @@ export default function DashboardPage() {
         </div>
 
         <Card>
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">Voter Participation Over Time</h3>
+          <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Voter Participation Over Time</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={participationOverTime}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#EDF0F4" />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#667085' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: '#667085' }} axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={{
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    borderRadius: '6px',
+                    border: '1px solid #D9E0E7',
+                    fontSize: '13px',
+                    boxShadow: 'none',
                   }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '12px', color: '#667085' }} />
                 <Line
                   type="monotone"
                   dataKey="voters"
-                  stroke="#6366f1"
+                  stroke={CHART_COLORS.primary}
                   strokeWidth={2}
-                  dot={{ r: 4 }}
+                  dot={{ r: 3, fill: CHART_COLORS.primary }}
+                  activeDot={{ r: 5 }}
                   name="Eligible Voters"
                 />
                 <Line
                   type="monotone"
                   dataKey="votes"
-                  stroke="#22c55e"
+                  stroke={CHART_COLORS.accent}
                   strokeWidth={2}
-                  dot={{ r: 4 }}
+                  dot={{ r: 3, fill: CHART_COLORS.accent }}
+                  activeDot={{ r: 5 }}
                   name="Votes Cast"
                 />
               </LineChart>
@@ -275,23 +301,23 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">Recent Activity</h3>
-          <div className="space-y-4">
+          <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Recent Activity</h3>
+          <div className="space-y-3">
             {recentActivity.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-4 rounded-lg border border-gray-100 p-4 transition-colors hover:bg-gray-50"
+                className="flex items-start gap-3 rounded-lg border border-surface-100 p-3.5 transition-colors hover:bg-surface-50"
               >
-                <div className="mt-0.5 rounded-full bg-primary-100 p-2">
-                  <Activity className="h-4 w-4 text-primary-600" />
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50">
+                  <Activity className="h-4 w-4 text-primary-500" />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900">{log.userName}</span>
-                    <span className="text-sm text-gray-500">{log.action}</span>
+                    <span className="text-sm font-medium text-surface-900">{log.userName}</span>
+                    <span className="text-sm text-surface-500">{log.action}</span>
                   </div>
-                  <p className="mt-0.5 truncate text-sm text-gray-600">{log.details}</p>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-0.5 truncate text-sm text-surface-600">{log.details}</p>
+                  <p className="mt-1 text-xs text-surface-400">
                     {new Date(log.createdAt).toLocaleString()}
                   </p>
                 </div>

@@ -29,12 +29,12 @@ const typeBadgeVariant: Record<ElectionType, 'default' | 'info' | 'success' | 'w
 function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-        <Icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-100">
+        <Icon className="h-4 w-4 text-surface-500" />
       </div>
       <div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-        <p className="font-medium text-gray-900 dark:text-white">{value}</p>
+        <p className="text-[12px] text-surface-400 uppercase tracking-wide">{label}</p>
+        <p className="text-[14px] font-medium text-primary-700">{value}</p>
       </div>
     </div>
   );
@@ -42,20 +42,20 @@ function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label
 
 function CandidateCard({ candidate }: { candidate: Candidate }) {
   return (
-    <Card hover className="flex flex-col items-center text-center">
+    <Card className="border border-surface-200 rounded-lg bg-white flex flex-col items-center text-center p-5">
       <Avatar
         src={candidate.photo}
         name={candidate.name}
         size="lg"
         className="mb-3"
       />
-      <h4 className="font-semibold text-gray-900 dark:text-white">{candidate.name}</h4>
+      <h4 className="text-[15px] font-semibold text-primary-700">{candidate.name}</h4>
       {candidate.party && (
-        <Badge variant="outline" className="mt-1">
+        <Badge variant="outline" className="mt-1 text-xs">
           {candidate.party}
         </Badge>
       )}
-      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+      <p className="mt-2 text-[13px] text-surface-500 leading-relaxed">
         {candidate.manifesto.length > 100
           ? candidate.manifesto.slice(0, 100) + '...'
           : candidate.manifesto}
@@ -80,11 +80,11 @@ export default function ElectionDetailPage() {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-48 w-full" />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-48" />
+              <Skeleton key={i} className="h-40" />
             ))}
           </div>
         </div>
@@ -116,23 +116,23 @@ export default function ElectionDetailPage() {
       <div className="space-y-6">
         <Link
           to="/elections"
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          className="inline-flex items-center gap-2 text-[13px] font-medium text-surface-500 hover:text-primary-600 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Elections
         </Link>
 
-        <Card>
+        <Card className="border border-surface-200 rounded-lg bg-white">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-[22px] font-bold text-primary-700">
                   {election.title}
                 </h1>
-                <Badge variant={typeBadgeVariant[election.type]}>{election.type}</Badge>
+                <Badge variant={typeBadgeVariant[election.type]} className="text-xs">{election.type}</Badge>
                 <StatusBadge status={election.status} />
               </div>
-              <p className="mt-2 text-gray-600 dark:text-gray-300">
+              <p className="mt-2 text-[14px] text-surface-500">
                 {election.organization}
               </p>
             </div>
@@ -148,17 +148,17 @@ export default function ElectionDetailPage() {
           <InfoItem icon={BarChart3} label="Votes Cast" value={formatNumber(election.votesCast)} />
         </div>
 
-        <Card>
-          <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Description</h2>
-          <p className="text-gray-600 dark:text-gray-300">{election.description}</p>
+        <Card className="border border-surface-200 rounded-lg bg-white">
+          <h2 className="mb-3 text-[16px] font-semibold text-primary-700">Description</h2>
+          <p className="text-[14px] text-surface-600 leading-relaxed">{election.description}</p>
         </Card>
 
-        <div className="rounded-xl border border-info-200 bg-info-50 p-4 dark:border-info-800 dark:bg-info-900/20">
+        <div className="rounded-lg border border-primary-200 bg-primary-50 p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 text-info-600 dark:text-info-400" />
+            <AlertCircle className="mt-0.5 h-5 w-5 text-primary-600 shrink-0" />
             <div>
-              <h3 className="font-medium text-info-800 dark:text-info-300">Voting Instructions</h3>
-              <ul className="mt-2 space-y-1 text-sm text-info-700 dark:text-info-400">
+              <h3 className="text-[14px] font-semibold text-primary-700">Voting Instructions</h3>
+              <ul className="mt-2 space-y-1 text-[13px] text-primary-600">
                 <li>• Review all candidates before making your selection</li>
                 <li>• You can select one candidate per position</li>
                 <li>• Your vote is final and cannot be changed after submission</li>
@@ -170,7 +170,7 @@ export default function ElectionDetailPage() {
 
         {candidates.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Candidates</h2>
+            <h2 className="mb-4 text-[16px] font-semibold text-primary-700">Candidates</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {candidates.map((candidate) => (
                 <CandidateCard key={candidate.id} candidate={candidate} />
@@ -182,23 +182,23 @@ export default function ElectionDetailPage() {
         <div className="flex flex-col gap-3 sm:flex-row">
           {isActive && !hasEnded && (
             <Link to={`/elections/${election.id}/vote`}>
-              <Button size="lg">
-                <Vote className="mr-2 h-5 w-5" />
+              <Button size="lg" className="bg-primary-600 hover:bg-primary-700 text-white rounded-md">
+                <Vote className="mr-2 h-4 w-4" />
                 Start Voting
               </Button>
             </Link>
           )}
           {hasResults && (
             <Link to={`/elections/${election.id}/results`}>
-              <Button variant="outline" size="lg">
-                <BarChart3 className="mr-2 h-5 w-5" />
+              <Button variant="outline" size="lg" className="border-surface-200 text-primary-600 hover:bg-primary-50 rounded-md">
+                <BarChart3 className="mr-2 h-4 w-4" />
                 View Results
               </Button>
             </Link>
           )}
           {hasEnded && !hasResults && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <Clock className="h-5 w-5" />
+            <div className="flex items-center gap-2 text-surface-500 text-[14px]">
+              <Clock className="h-4 w-4" />
               <span>Results are being tabulated</span>
             </div>
           )}

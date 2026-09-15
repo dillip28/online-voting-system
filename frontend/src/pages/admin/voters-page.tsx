@@ -94,8 +94,8 @@ export default function VotersPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Voters</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-[22px] font-semibold text-primary-700">Voters</h1>
+            <p className="mt-1 text-[14px] text-surface-500">
               Manage registered voters and their account status.
             </p>
           </div>
@@ -138,7 +138,7 @@ export default function VotersPage() {
         </Card>
 
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-[14px] text-surface-500">
             {filtered.length} voter(s) found
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function VotersPage() {
                     <TableRow key={voter.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-xs font-semibold text-primary-600 border border-primary-100">
                             {voter.avatar ? (
                               <img src={voter.avatar} alt="" className="h-8 w-8 rounded-full" />
                             ) : (
@@ -180,11 +180,11 @@ export default function VotersPage() {
                                 .slice(0, 2)
                             )}
                           </div>
-                          <span className="font-medium text-gray-900">{voter.fullName}</span>
+                          <span className="font-medium text-surface-800">{voter.fullName}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-500">{voter.email}</TableCell>
-                      <TableCell>{voter.studentId ?? 'N/A'}</TableCell>
+                      <TableCell className="text-surface-500 text-[14px]">{voter.email}</TableCell>
+                      <TableCell className="text-[14px] text-surface-600">{voter.studentId ?? 'N/A'}</TableCell>
                       <TableCell>
                         <Badge variant={voter.isVerified ? 'success' : 'warning'}>
                           {voter.isVerified ? 'Verified' : 'Unverified'}
@@ -202,7 +202,7 @@ export default function VotersPage() {
                             size="sm"
                             onClick={() => setViewVoter(voter)}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 text-surface-500" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -224,7 +224,7 @@ export default function VotersPage() {
             </Card>
 
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+              <p className="text-[14px] text-surface-500">
                 Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
                 {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}{' '}
                 voters
@@ -246,11 +246,11 @@ export default function VotersPage() {
         size="md"
       >
         {viewVoter && (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-xl font-bold text-primary-700">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 text-lg font-semibold text-primary-600 border border-primary-100">
                 {viewVoter.avatar ? (
-                  <img src={viewVoter.avatar} alt="" className="h-16 w-16 rounded-full" />
+                  <img src={viewVoter.avatar} alt="" className="h-14 w-14 rounded-full" />
                 ) : (
                   viewVoter.fullName
                     .split(' ')
@@ -261,40 +261,40 @@ export default function VotersPage() {
                 )}
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{viewVoter.fullName}</h3>
-                <p className="text-sm text-gray-500">{viewVoter.email}</p>
+                <h3 className="text-[16px] font-semibold text-surface-800">{viewVoter.fullName}</h3>
+                <p className="text-[14px] text-surface-500">{viewVoter.email}</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4">
+            <div className="grid grid-cols-2 gap-4 border-t border-surface-100 pt-4">
               <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="text-sm font-medium text-gray-900">{viewVoter.phone ?? 'N/A'}</p>
+                <p className="text-[13px] text-surface-400">Phone</p>
+                <p className="text-[14px] font-medium text-surface-700">{viewVoter.phone ?? 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Student ID</p>
-                <p className="text-sm font-medium text-gray-900">{viewVoter.studentId ?? 'N/A'}</p>
+                <p className="text-[13px] text-surface-400">Student ID</p>
+                <p className="text-[14px] font-medium text-surface-700">{viewVoter.studentId ?? 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Verification</p>
+                <p className="text-[13px] text-surface-400">Verification</p>
                 <Badge variant={viewVoter.isVerified ? 'success' : 'warning'}>
                   {viewVoter.isVerified ? 'Verified' : 'Unverified'}
                 </Badge>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Account Status</p>
+                <p className="text-[13px] text-surface-400">Account Status</p>
                 <Badge variant={viewVoter.isActive ? 'success' : 'danger'}>
                   {viewVoter.isActive ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
               <div>
-                <p className="text-sm text-gray-500">2FA Enabled</p>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-[13px] text-surface-400">2FA Enabled</p>
+                <p className="text-[14px] font-medium text-surface-700">
                   {viewVoter.twoFactorEnabled ? 'Yes' : 'No'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Joined</p>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-[13px] text-surface-400">Joined</p>
+                <p className="text-[14px] font-medium text-surface-700">
                   {new Date(viewVoter.createdAt).toLocaleDateString()}
                 </p>
               </div>

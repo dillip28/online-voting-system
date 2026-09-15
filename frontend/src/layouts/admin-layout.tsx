@@ -78,8 +78,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         className={cn(
           'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
           isActive
-            ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'
+            ? 'bg-primary-50 text-primary-600'
+            : 'text-surface-500 hover:bg-surface-100 hover:text-surface-700'
         )}
       >
         <item.icon className="h-5 w-5 shrink-0" />
@@ -89,7 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex min-h-screen bg-surface-50">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -99,23 +99,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-200 dark:border-gray-800 dark:bg-gray-900',
+          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-surface-200 bg-white transition-transform duration-200',
           'lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4 dark:border-gray-800">
-          <Link to="/admin" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600">
-              <span className="text-sm font-bold text-white">V</span>
+        <div className="flex h-16 items-center justify-between border-b border-surface-200 px-4">
+          <Link to="/admin" className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600">
+              <span className="text-base font-bold text-white">V</span>
             </div>
-            <span className="text-lg font-bold text-gray-900 dark:text-white">
+            <span className="text-lg font-semibold text-primary-700">
               VoteSecure Admin
             </span>
           </Link>
           <button
             type="button"
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
+            className="rounded-lg p-1.5 text-surface-500 hover:bg-surface-100 lg:hidden"
             onClick={closeSidebar}
           >
             <X className="h-5 w-5" />
@@ -124,14 +124,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <div className="mb-4">
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-surface-400">
               Main
             </p>
             <div className="space-y-1">{mainNav.map(renderNavItem)}</div>
           </div>
 
           <div className="mb-4">
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-surface-400">
               Management
             </p>
             <div className="space-y-1">{managementNav.map(renderNavItem)}</div>
@@ -139,7 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {isSuperAdmin && (
             <div>
-              <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-surface-400">
                 Super Admin
               </p>
               <div className="space-y-1">{superAdminNav.map(renderNavItem)}</div>
@@ -149,10 +149,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md dark:border-gray-800 dark:bg-gray-950/80 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-surface-200 bg-white px-4 sm:px-6">
           <button
             type="button"
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
+            className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 lg:hidden"
             onClick={toggleSidebar}
           >
             <Menu className="h-5 w-5" />
@@ -161,7 +161,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              className="relative rounded-lg p-2 text-surface-500 hover:bg-surface-100"
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
@@ -174,10 +174,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-surface-100"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-900/50 dark:text-primary-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-600">
                   {user?.avatar ? (
                     <img src={user.avatar} alt="" className="h-8 w-8 rounded-full" />
                   ) : (
@@ -185,36 +185,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   )}
                 </div>
                 <div className="hidden text-left sm:block">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-surface-900">
                     {user?.fullName}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                  <p className="text-xs text-surface-500 capitalize">
                     {user?.role?.replace('_', ' ')}
                   </p>
                 </div>
-                <ChevronDown className="hidden h-4 w-4 text-gray-500 sm:block" />
+                <ChevronDown className="hidden h-4 w-4 text-surface-500 sm:block" />
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                  <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-800">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-surface-200 bg-white py-1 shadow-lg">
+                  <div className="border-b border-surface-100 px-4 py-3">
+                    <p className="text-sm font-medium text-surface-900">
                       {user?.fullName}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+                    <p className="text-xs text-surface-500">{user?.email}</p>
                   </div>
                   <Link
                     to="/admin/settings"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-surface-600 hover:bg-surface-50"
                     onClick={() => setDropdownOpen(false)}
                   >
                     <Settings className="h-4 w-4" />
                     Settings
                   </Link>
-                  <div className="border-t border-gray-100 dark:border-gray-800" />
+                  <div className="border-t border-surface-100" />
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-danger-600 hover:bg-gray-50 dark:text-danger-400 dark:hover:bg-gray-800"
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-danger-600 hover:bg-surface-50"
                     onClick={() => {
                       setDropdownOpen(false);
                       logout();

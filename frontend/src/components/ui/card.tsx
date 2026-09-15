@@ -12,8 +12,8 @@ function Card({ children, className, hover, onClick }: CardProps) {
   return (
     <div
       className={cn(
-        'rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900',
-        hover && 'transition-shadow hover:shadow-md cursor-pointer',
+        'rounded-lg border border-surface-200 bg-white p-5',
+        hover && 'transition-shadow hover:shadow-sm cursor-pointer',
         onClick && 'cursor-pointer',
         className
       )}
@@ -31,11 +31,11 @@ function CardHeader({ children, className }: { children: ReactNode; className?: 
 }
 
 function CardTitle({ children, className }: { children: ReactNode; className?: string }) {
-  return <h3 className={cn('text-lg font-semibold text-gray-900 dark:text-white', className)}>{children}</h3>;
+  return <h3 className={cn('text-base font-semibold text-surface-900', className)}>{children}</h3>;
 }
 
 function CardDescription({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cn('text-sm text-gray-500 dark:text-gray-400', className)}>{children}</p>;
+  return <p className={cn('text-sm text-surface-500', className)}>{children}</p>;
 }
 
 function CardContent({ children, className }: { children: ReactNode; className?: string }) {

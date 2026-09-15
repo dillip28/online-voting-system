@@ -67,8 +67,8 @@ export default function ElectionsListPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Elections</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-[22px] font-semibold text-surface-900">Elections</h1>
+            <p className="mt-1 text-sm text-surface-500">
               Manage all elections in the system.
             </p>
           </div>
@@ -116,7 +116,7 @@ export default function ElectionsListPage() {
           />
         ) : (
           <>
-            <Card className="!p-0">
+            <Card className="!p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -134,15 +134,15 @@ export default function ElectionsListPage() {
                     <TableRow key={election.id}>
                       <TableCell>
                         <div>
-                          <p className="font-medium text-gray-900">{election.title}</p>
-                          <p className="text-xs text-gray-500">{election.organization}</p>
+                          <p className="font-medium text-surface-900">{election.title}</p>
+                          <p className="text-xs text-surface-500">{election.organization}</p>
                         </div>
                       </TableCell>
                       <TableCell className="capitalize">{election.type}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <p>{formatDate(election.startDate)}</p>
-                          <p className="text-gray-500">to {formatDate(election.endDate)}</p>
+                          <p className="text-surface-700">{formatDate(election.startDate)}</p>
+                          <p className="text-surface-400">to {formatDate(election.endDate)}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -182,7 +182,7 @@ export default function ElectionsListPage() {
             </Card>
 
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-surface-500">
                 Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
                 {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}{' '}
                 elections

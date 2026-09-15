@@ -1,62 +1,58 @@
-import { forwardRef, useState, type InputHTMLAttributes, type ElementType } from 'react';
+import { forwardRef, useState, type InputHTMLAttributes } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  icon?: ElementType;
+  icon?: React.ElementType;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, icon: Icon, type, id, ...rest }, ref) => {
+  ({ className, label, error, icon: Icon, type, id: idProp, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === 'password';
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+    const inputId = idProp || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
       <div className="w-full">
         {label && (
-          <label
-            htmlFor={inputId}
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-surface-700">
             {label}
           </label>
         )}
         <div className="relative">
-          {Icon && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <Icon className="h-5 w-5 text-gray-400" />
-            </div>
+          {Icon && !isPassword && (
+            <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
           )}
           <input
             ref={ref}
             id={inputId}
-            type={isPassword && showPassword ? 'text' : type}
+            type={isPassword ? (showPassword ? 'text' : 'password') : type}
             className={cn(
-              'block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900',
-              'placeholder:text-gray-400',
-              'focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
-              'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
-              Icon && 'pl-10',
+              'h-10 w-full rounded-md border border-surface-200 bg-white px-3 text-sm text-surface-900',
+              'placeholder:text-surface-400',
+              'hover:border-surface-300',
+              'focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20',
+              'disabled:cursor-not-allowed disabled:bg-surface-50 disabled:text-surface-400',
+              Icon && !isPassword && 'pl-10',
               isPassword && 'pr-10',
-              error && 'border-danger-500 focus:border-danger-500 focus:ring-danger-500',
+              error && 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20',
               className
             )}
-            {...rest}
+            {...props}
           />
           {isPassword && (
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600"
             >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           )}
         </div>
-        {error && <p className="mt-1 text-sm text-danger-600">{error}</p>}
+        {error && <p className="mt-1 text-xs text-danger-500">{error}</p>}
       </div>
     );
   }

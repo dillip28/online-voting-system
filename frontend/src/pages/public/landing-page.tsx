@@ -173,26 +173,22 @@ function LandingPage() {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-24 sm:px-6 lg:px-8 lg:py-32">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
-        <div className="relative mx-auto max-w-7xl">
+      <section className="bg-primary-600 px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <div className="mx-auto max-w-7xl">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-4 py-1.5 text-sm text-slate-300 backdrop-blur-sm">
-                <CheckCircle className="h-4 w-4 text-emerald-400" />
+              <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-primary-400/30 bg-primary-700 px-3 py-1.5 text-xs font-medium text-primary-200">
+                <CheckCircle className="h-3.5 w-3.5 text-accent-400" />
                 Trusted by 10,000+ voters nationwide
               </div>
-              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Secure. Transparent.{' '}
-                <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                  Simple Voting.
-                </span>
+              <h1 className="text-3xl font-bold tracking-tight text-white sm:text-[28px]">
+                Secure Digital Voting Platform
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300">
+              <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-primary-200">
                 A modern digital voting platform designed for colleges, organizations, and
                 institutions. Cast your vote with confidence.
               </p>
-              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link to="/register">
                   <Button size="lg" className="w-full sm:w-auto">
                     Get Started
@@ -200,72 +196,50 @@ function LandingPage() {
                   </Button>
                 </Link>
                 <a href="#how-it-works">
-                  <Button variant="outline" size="lg" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700 sm:w-auto">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-primary-400/30 text-white hover:bg-primary-700 sm:w-auto"
+                  >
                     How It Works
                   </Button>
                 </a>
               </div>
             </div>
 
-            {/* CSS Illustration */}
             <div className="hidden lg:block">
-              <div className="relative mx-auto h-80 w-80">
-                <div className="absolute left-8 top-0 h-64 w-52 rotate-[-8deg] rounded-2xl border border-slate-600/50 bg-gradient-to-br from-slate-700/80 to-slate-800/80 p-5 shadow-2xl backdrop-blur-sm">
-                  <div className="mb-3 flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full bg-red-400" />
-                    <div className="h-3 w-3 rounded-full bg-yellow-400" />
-                    <div className="h-3 w-3 rounded-full bg-green-400" />
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-3 w-3/4 rounded bg-slate-600/60" />
-                    <div className="h-3 w-1/2 rounded bg-slate-600/40" />
-                    <div className="flex items-center gap-2 pt-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded bg-emerald-500/20">
-                        <Vote className="h-3 w-3 text-emerald-400" />
-                      </div>
-                      <div className="h-2.5 w-20 rounded bg-slate-600/50" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-500/20">
-                        <Shield className="h-3 w-3 text-blue-400" />
-                      </div>
-                      <div className="h-2.5 w-16 rounded bg-slate-600/50" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded bg-violet-500/20">
-                        <Lock className="h-3 w-3 text-violet-400" />
-                      </div>
-                      <div className="h-2.5 w-24 rounded bg-slate-600/50" />
-                    </div>
-                  </div>
+              <div className="mx-auto max-w-md rounded-lg border border-primary-400/20 bg-primary-700/50 p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-accent-400" />
+                  <span className="text-sm font-semibold text-white">VoteSecure Platform</span>
                 </div>
-                <div className="absolute bottom-0 right-0 h-56 w-48 rotate-[5deg] rounded-2xl border border-slate-600/50 bg-gradient-to-br from-blue-900/60 to-indigo-900/60 p-5 shadow-2xl backdrop-blur-sm">
-                  <div className="mb-3 flex items-center justify-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20">
-                      <CheckCircle className="h-6 w-6 text-emerald-400" />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 rounded-md bg-primary-800/40 p-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent-500/20">
+                      <Vote className="h-4 w-4 text-accent-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-white">Student Council Election</p>
+                      <p className="text-[11px] text-primary-300">Active — 234 votes cast</p>
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className="mx-auto mb-2 h-3 w-24 rounded bg-slate-500/50" />
-                    <div className="mx-auto h-2 w-16 rounded bg-slate-500/30" />
+                  <div className="flex items-center gap-3 rounded-md bg-primary-800/40 p-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary-500/30">
+                      <BarChart3 className="h-4 w-4 text-primary-200" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-white">Real-Time Results</p>
+                      <p className="text-[11px] text-primary-300">Transparent &amp; verifiable</p>
+                    </div>
                   </div>
-                  <div className="mt-4 space-y-2">
-                    <div className="h-2 w-full rounded bg-slate-500/40" />
-                    <div className="h-2 w-3/4 rounded bg-slate-500/30" />
-                    <div className="h-2 w-1/2 rounded bg-slate-500/20" />
-                  </div>
-                </div>
-                <div className="absolute bottom-8 left-0 h-36 w-32 rotate-[12deg] rounded-xl border border-slate-600/40 bg-gradient-to-br from-slate-700/60 to-slate-800/60 p-4 shadow-xl backdrop-blur-sm">
-                  <div className="mb-2 flex items-center gap-1.5">
-                    <BarChart3 className="h-4 w-4 text-blue-400" />
-                    <div className="h-2 w-12 rounded bg-slate-600/50" />
-                  </div>
-                  <div className="flex items-end gap-1.5 pt-3">
-                    <div className="h-8 w-3 rounded-t bg-blue-500/40" />
-                    <div className="h-12 w-3 rounded-t bg-emerald-500/40" />
-                    <div className="h-6 w-3 rounded-t bg-violet-500/40" />
-                    <div className="h-10 w-3 rounded-t bg-blue-500/40" />
-                    <div className="h-14 w-3 rounded-t bg-emerald-500/40" />
+                  <div className="flex items-center gap-3 rounded-md bg-primary-800/40 p-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent-500/20">
+                      <Lock className="h-4 w-4 text-accent-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-white">End-to-End Encrypted</p>
+                      <p className="text-[11px] text-primary-300">Bank-grade security</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -278,24 +252,24 @@ function LandingPage() {
       <section id="features" className="bg-white px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <h2 className="text-[22px] font-bold tracking-tight text-surface-900">
               Everything you need for secure elections
             </h2>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-3 text-[15px] text-surface-500">
               A complete voting solution with enterprise-grade security, real-time analytics, and
               an intuitive interface.
             </p>
           </div>
-          <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
                 <Card key={feature.title} hover className="group">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100">
-                    <Icon className="h-6 w-6" />
+                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100">
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                  <h3 className="text-[15px] font-semibold text-surface-900">{feature.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-surface-500">
                     {feature.description}
                   </p>
                 </Card>
@@ -306,18 +280,18 @@ function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="bg-slate-50 px-4 py-24 sm:px-6 lg:px-8">
+      <section id="how-it-works" className="bg-surface-50 px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <h2 className="text-[22px] font-bold tracking-tight text-surface-900">
               How it works
             </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Seven simple steps from registration to confirmation. Voting has never been easier.
+            <p className="mt-3 text-[15px] text-surface-500">
+              Seven simple steps from registration to confirmation.
             </p>
           </div>
-          <div className="relative mt-16">
-            <div className="absolute left-8 top-8 bottom-8 hidden w-0.5 bg-gray-200 lg:left-1/2 lg:block" />
+          <div className="relative mt-12">
+            <div className="absolute left-8 top-8 bottom-8 hidden w-px bg-surface-200 lg:left-1/2 lg:block" />
             <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide lg:grid lg:grid-cols-7 lg:gap-0 lg:overflow-visible lg:pb-0">
               {steps.map((step) => {
                 const Icon = step.icon;
@@ -326,14 +300,14 @@ function LandingPage() {
                     key={step.number}
                     className="flex min-w-[160px] flex-col items-center text-center lg:min-w-0"
                   >
-                    <div className="relative z-10 mb-4 flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-primary-600 text-white shadow-lg">
-                      <Icon className="h-7 w-7" />
+                    <div className="relative z-10 mb-3 flex h-14 w-14 items-center justify-center rounded-full border-4 border-surface-50 bg-primary-600 text-white shadow-sm">
+                      <Icon className="h-6 w-6" />
                     </div>
-                    <div className="mb-1 text-xs font-bold uppercase tracking-widest text-primary-600">
+                    <div className="mb-1 text-[11px] font-bold uppercase tracking-widest text-primary-600">
                       Step {step.number}
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900">{step.title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                    <h3 className="text-sm font-semibold text-surface-900">{step.title}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-surface-500">
                       {step.description}
                     </p>
                   </div>
@@ -348,28 +322,28 @@ function LandingPage() {
       <section id="trust" className="bg-white px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <h2 className="text-[22px] font-bold tracking-tight text-surface-900">
               Built on Trust
             </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Our platform is engineered from the ground up to prioritize security, privacy, and
+            <p className="mt-3 text-[15px] text-surface-500">
+              Engineered from the ground up to prioritize security, privacy, and
               integrity at every level.
             </p>
           </div>
-          <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
+          <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2">
             {trustItems.map((item) => {
               const Icon = item.icon;
               return (
                 <div
                   key={item.title}
-                  className="flex gap-5 rounded-2xl border border-gray-100 bg-slate-50 p-6 transition-colors hover:bg-slate-100"
+                  className="flex gap-4 rounded-lg border border-surface-200 bg-white p-5 transition-colors hover:bg-surface-50"
                 >
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary-100 text-primary-600">
-                    <Icon className="h-6 w-6" />
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                    <Icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
+                    <h3 className="text-[15px] font-semibold text-surface-900">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-surface-500">
                       {item.description}
                     </p>
                   </div>
@@ -381,32 +355,32 @@ function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="bg-slate-50 px-4 py-24 sm:px-6 lg:px-8">
+      <section id="faq" className="bg-surface-50 px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <h2 className="text-[22px] font-bold tracking-tight text-surface-900">
               Frequently Asked Questions
             </h2>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-3 text-[15px] text-surface-500">
               Have questions? We have answers.
             </p>
           </div>
-          <div className="mt-12 space-y-3">
+          <div className="mt-10 space-y-2">
             {faqs.map((faq, index) => (
               <div
                 key={faq.question}
-                className="overflow-hidden rounded-xl border border-gray-200 bg-white"
+                className="overflow-hidden rounded-lg border border-surface-200 bg-white"
               >
                 <button
                   type="button"
                   onClick={() => toggleFaq(index)}
-                  className="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-surface-50"
                 >
-                  <span className="text-base font-medium text-gray-900">{faq.question}</span>
+                  <span className="text-sm font-medium text-surface-900">{faq.question}</span>
                   {openFaq === index ? (
-                    <ChevronUp className="h-5 w-5 flex-shrink-0 text-gray-500" />
+                    <ChevronUp className="h-4 w-4 flex-shrink-0 text-surface-400" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 flex-shrink-0 text-gray-500" />
+                    <ChevronDown className="h-4 w-4 flex-shrink-0 text-surface-400" />
                   )}
                 </button>
                 <div
@@ -415,8 +389,8 @@ function LandingPage() {
                     openFaq === index ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
                   )}
                 >
-                  <div className="border-t border-gray-100 px-6 pb-5 pt-4">
-                    <p className="text-sm leading-relaxed text-gray-600">{faq.answer}</p>
+                  <div className="border-t border-surface-100 px-5 pb-4 pt-3">
+                    <p className="text-sm leading-relaxed text-surface-500">{faq.answer}</p>
                   </div>
                 </div>
               </div>
@@ -426,20 +400,20 @@ function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-br from-primary-600 to-primary-700 px-4 py-20 sm:px-6 lg:px-8">
+      <section className="bg-primary-700 px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <h2 className="text-[22px] font-bold tracking-tight text-white sm:text-[24px]">
             Ready to modernize your elections?
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-100">
+          <p className="mx-auto mt-3 max-w-2xl text-[15px] text-primary-200">
             Join thousands of institutions that trust VoteSecure for their elections. Get started in
             minutes — no setup fees, no complex configuration.
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link to="/register">
               <Button
                 size="lg"
-                className="w-full bg-white text-primary-700 hover:bg-primary-50 sm:w-auto"
+                className="w-full bg-white text-primary-700 hover:bg-surface-50 sm:w-auto"
               >
                 Create Free Account
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -449,7 +423,7 @@ function LandingPage() {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full border-primary-300 text-white hover:bg-primary-600 sm:w-auto"
+                className="w-full border-primary-400/30 text-white hover:bg-primary-600 sm:w-auto"
               >
                 Sign In
               </Button>

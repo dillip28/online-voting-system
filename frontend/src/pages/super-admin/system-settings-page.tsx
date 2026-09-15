@@ -86,22 +86,24 @@ export default function SystemSettingsPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-[22px] font-semibold text-primary-700">
             System Settings
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-[14px] text-surface-500">
             Configure platform-wide settings and policies
           </p>
         </div>
 
-        <Card>
-          <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <Card className="!p-0">
+          <div className="px-6 pt-4">
+            <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+          </div>
 
           <form onSubmit={handleSave} className="p-6">
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="mb-4 text-[16px] font-semibold text-surface-800">
                     General Settings
                   </h3>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -154,7 +156,7 @@ export default function SystemSettingsPage() {
             {activeTab === 'security' && (
               <div className="space-y-8">
                 <div>
-                  <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="mb-4 text-[16px] font-semibold text-surface-800">
                     Password Policy
                   </h3>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -172,7 +174,7 @@ export default function SystemSettingsPage() {
                       }
                     />
                     <div className="space-y-3">
-                      <p className="text-sm font-medium text-gray-700">
+                      <p className="text-[14px] font-medium text-surface-700">
                         Password Requirements
                       </p>
                       <Checkbox
@@ -209,8 +211,8 @@ export default function SystemSettingsPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+                <div className="border-t border-surface-100 pt-6">
+                  <h3 className="mb-4 text-[16px] font-semibold text-surface-800">
                     Session Settings
                   </h3>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
@@ -256,16 +258,16 @@ export default function SystemSettingsPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+                <div className="border-t border-surface-100 pt-6">
+                  <h3 className="mb-4 text-[16px] font-semibold text-surface-800">
                     Two-Factor Authentication
                   </h3>
-                  <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                  <div className="flex items-center justify-between rounded-lg border border-surface-200 p-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-[14px] font-medium text-surface-800">
                         Require 2FA for all admins
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-[14px] text-surface-500">
                         Enforce two-factor authentication for all administrator
                         accounts
                       </p>
@@ -284,17 +286,17 @@ export default function SystemSettingsPage() {
             {activeTab === 'maintenance' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="mb-4 text-[16px] font-semibold text-surface-800">
                     Maintenance Mode
                   </h3>
-                  <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                  <div className="flex items-center justify-between rounded-lg border border-surface-200 p-4">
                     <div className="flex items-center gap-3">
                       <div
                         className={cn(
                           'flex h-10 w-10 items-center justify-center rounded-lg',
                           maintenance.maintenanceMode
-                            ? 'bg-warning-100 text-warning-600'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-warning-50 text-warning-600 border border-warning-500/20'
+                            : 'bg-surface-100 text-surface-500 border border-surface-200'
                         )}
                       >
                         {maintenance.maintenanceMode ? (
@@ -304,10 +306,10 @@ export default function SystemSettingsPage() {
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="text-[14px] font-medium text-surface-800">
                           Enable Maintenance Mode
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-[14px] text-surface-500">
                           Temporarily disable public access to the platform
                         </p>
                       </div>
@@ -325,14 +327,14 @@ export default function SystemSettingsPage() {
                 </div>
 
                 {maintenance.maintenanceMode && (
-                  <div className="rounded-lg border border-warning-200 bg-warning-50 p-4 dark:border-warning-800 dark:bg-warning-900/20">
+                  <div className="rounded-lg border border-warning-500/20 bg-warning-50 p-4">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning-600" />
                       <div>
-                        <p className="text-sm font-medium text-warning-800 dark:text-warning-300">
+                        <p className="text-[14px] font-medium text-warning-700">
                           Maintenance mode is active
                         </p>
-                        <p className="mt-1 text-sm text-warning-700 dark:text-warning-400">
+                        <p className="mt-1 text-[14px] text-warning-600">
                           All public-facing pages will display the maintenance
                           message. Admins can still access the dashboard.
                         </p>
@@ -342,7 +344,7 @@ export default function SystemSettingsPage() {
                 )}
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-[14px] font-medium text-surface-700">
                     Maintenance Message
                   </label>
                   <textarea
@@ -355,14 +357,14 @@ export default function SystemSettingsPage() {
                       }))
                     }
                     className={cn(
-                      'block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900',
-                      'placeholder:text-gray-400',
+                      'block w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-[14px] text-surface-800',
+                      'placeholder:text-surface-400',
                       'focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
-                      'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500'
+                      'disabled:cursor-not-allowed disabled:bg-surface-50 disabled:text-surface-400'
                     )}
                     placeholder="Enter a message to display during maintenance..."
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-surface-400">
                     This message will be shown to users when maintenance mode is
                     enabled.
                   </p>
@@ -370,7 +372,7 @@ export default function SystemSettingsPage() {
               </div>
             )}
 
-            <div className="mt-8 flex justify-end border-t border-gray-200 pt-6 dark:border-gray-800">
+            <div className="mt-8 flex justify-end border-t border-surface-100 pt-6">
               <Button type="submit" isLoading={saving}>
                 <Save className="mr-2 h-4 w-4" />
                 Save Changes

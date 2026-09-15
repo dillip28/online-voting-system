@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,7 +33,6 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      // In a real app, this would call an API endpoint
       await new Promise((resolve) => setTimeout(resolve, 1500));
       setSubmitted(true);
     } catch (err: any) {
@@ -46,34 +44,36 @@ export default function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur-sm">
+      <Card className="w-full max-w-md">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center space-y-4 text-center">
-            <div className="rounded-full bg-primary/10 p-3">
-              <CheckCircle2 className="h-10 w-10 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50">
+              <CheckCircle2 className="h-6 w-6 text-primary-500" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-xl font-bold tracking-tight">Check your email</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-[20px] font-bold tracking-tight text-surface-900">
+                Check your email
+              </h2>
+              <p className="text-sm text-surface-500">
                 We&apos;ve sent a password reset link to{' '}
-                <span className="font-medium text-foreground">{email}</span>
+                <span className="font-medium text-surface-700">{email}</span>
               </p>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-surface-400">
               Didn&apos;t receive the email? Check your spam folder or{' '}
               <button
                 onClick={() => {
                   setSubmitted(false);
                   setEmail('');
                 }}
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-primary-500 hover:text-primary-600"
               >
                 try a different email
               </button>
             </p>
             <Link
               to="/login"
-              className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+              className="inline-flex items-center text-sm font-medium text-primary-500 hover:text-primary-600"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
               Back to sign in
@@ -85,51 +85,45 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur-sm">
+    <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold tracking-tight">Forgot password?</CardTitle>
-        <CardDescription className="text-muted-foreground">
+        <CardTitle className="text-[20px] font-bold tracking-tight text-surface-900">
+          Forgot password?
+        </CardTitle>
+        <CardDescription className="text-sm text-surface-500">
           Enter your email and we&apos;ll send you a reset link
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (error) setError('');
-                }}
-                className={cn('pl-10', error && 'border-destructive')}
-              />
-            </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-          </div>
+          <Input
+            id="email"
+            label="Email address"
+            type="email"
+            placeholder="you@example.com"
+            icon={Mail}
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError('');
+            }}
+            error={error}
+          />
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending reset link...
-              </>
-            ) : (
-              'Send Reset Link'
-            )}
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full"
+            disabled={loading}
+            isLoading={loading}
+          >
+            {loading ? 'Sending reset link...' : 'Send Reset Link'}
           </Button>
 
           <div className="text-center">
             <Link
               to="/login"
-              className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+              className="inline-flex items-center text-sm font-medium text-primary-500 hover:text-primary-600"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
               Back to sign in

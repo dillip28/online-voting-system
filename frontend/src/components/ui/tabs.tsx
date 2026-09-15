@@ -15,7 +15,7 @@ interface TabsProps {
 
 function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
   return (
-    <div className="border-b border-gray-200">
+    <div className="border-b border-surface-200">
       <nav className="-mb-px flex gap-6">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -25,10 +25,10 @@ function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                'inline-flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium transition-colors',
+                'inline-flex items-center gap-1.5 border-b-2 px-1 py-3 text-sm font-medium transition-colors',
                 isActive
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-surface-500 hover:border-surface-300 hover:text-surface-700'
               )}
             >
               {Icon && <Icon className="h-4 w-4" />}

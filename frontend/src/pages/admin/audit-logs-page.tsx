@@ -87,8 +87,8 @@ export default function AuditLogsPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-[22px] font-semibold text-primary-700">Audit Logs</h1>
+            <p className="mt-1 text-[14px] text-surface-500">
               Track all system activities and changes.
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function AuditLogsPage() {
         </Card>
 
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-[14px] text-surface-500">
             {filtered.length} log(s) found
           </p>
         </div>
@@ -174,14 +174,14 @@ export default function AuditLogsPage() {
                   {paginated.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-[14px] text-surface-500">
                           {formatDateTime(log.createdAt)}
                         </span>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium text-gray-900">{log.userName}</p>
-                          <p className="text-xs capitalize text-gray-500">
+                          <p className="font-medium text-surface-800">{log.userName}</p>
+                          <p className="text-xs capitalize text-surface-400">
                             {log.userRole.replace('_', ' ')}
                           </p>
                         </div>
@@ -191,15 +191,15 @@ export default function AuditLogsPage() {
                           {log.action}
                         </Badge>
                       </TableCell>
-                      <TableCell className="capitalize text-gray-600">
+                      <TableCell className="capitalize text-surface-600 text-[14px]">
                         {log.resource}
                       </TableCell>
                       <TableCell>
-                        <p className="max-w-xs truncate text-sm text-gray-600">
+                        <p className="max-w-xs truncate text-[14px] text-surface-500">
                           {log.details ?? '-'}
                         </p>
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm text-gray-500">
+                      <TableCell className="text-right font-mono text-[14px] text-surface-500">
                         {log.ipAddress ?? 'N/A'}
                       </TableCell>
                     </TableRow>
@@ -209,7 +209,7 @@ export default function AuditLogsPage() {
             </Card>
 
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+              <p className="text-[14px] text-surface-500">
                 Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
                 {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}{' '}
                 logs

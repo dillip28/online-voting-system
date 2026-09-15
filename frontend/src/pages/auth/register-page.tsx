@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, IdCard, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, IdCard, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import type { FormEvent } from 'react';
 type PasswordStrength = 'weak' | 'fair' | 'strong';
 
 function getPasswordStrength(password: string): { level: PasswordStrength; color: string; width: string } {
-  if (!password) return { level: 'weak', color: 'bg-destructive', width: '0%' };
+  if (!password) return { level: 'weak', color: 'bg-danger-500', width: '0%' };
   let score = 0;
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
@@ -21,9 +21,9 @@ function getPasswordStrength(password: string): { level: PasswordStrength; color
   if (/\d/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 2) return { level: 'weak', color: 'bg-destructive', width: '33%' };
-  if (score <= 3) return { level: 'fair', color: 'bg-yellow-500', width: '66%' };
-  return { level: 'strong', color: 'bg-green-500', width: '100%' };
+  if (score <= 2) return { level: 'weak', color: 'bg-danger-500', width: '33%' };
+  if (score <= 3) return { level: 'fair', color: 'bg-warning-500', width: '66%' };
+  return { level: 'strong', color: 'bg-success-500', width: '100%' };
 }
 
 export default function RegisterPage() {
@@ -37,8 +37,6 @@ export default function RegisterPage() {
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -97,182 +95,118 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur-sm">
+    <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold tracking-tight">Create an account</CardTitle>
-        <CardDescription className="text-muted-foreground">
+        <CardTitle className="text-[20px] font-bold tracking-tight text-surface-900">
+          Create an account
+        </CardTitle>
+        <CardDescription className="text-sm text-surface-500">
           Enter your details to get started
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="fullName" className="text-sm font-medium">
-              Full Name <span className="text-destructive">*</span>
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="fullName"
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className={cn('pl-10', errors.fullName && 'border-destructive')}
-              />
-            </div>
-            {errors.fullName && <p className="text-xs text-destructive">{errors.fullName}</p>}
-          </div>
+          <Input
+            id="fullName"
+            label="Full Name"
+            placeholder="John Doe"
+            icon={User}
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            error={errors.fullName}
+          />
 
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email <span className="text-destructive">*</span>
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={cn('pl-10', errors.email && 'border-destructive')}
-              />
-            </div>
-            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-          </div>
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            icon={Mail}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={errors.email}
+          />
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label htmlFor="phone" className="text-sm font-medium">
-                Phone <span className="text-muted-foreground text-xs">(optional)</span>
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  placeholder="+1 234 567"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="studentId" className="text-sm font-medium">
-                ID Number <span className="text-muted-foreground text-xs">(optional)</span>
-              </label>
-              <div className="relative">
-                <IdCard className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="studentId"
-                  placeholder="STU-001"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
+            <Input
+              id="phone"
+              label="Phone (optional)"
+              placeholder="+1 234 567"
+              icon={Phone}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            <Input
+              id="studentId"
+              label="ID Number (optional)"
+              placeholder="STU-001"
+              icon={IdCard}
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password <span className="text-destructive">*</span>
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={cn('pl-10 pr-10', errors.password && 'border-destructive')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
-
+            <Input
+              id="password"
+              label="Password"
+              type="password"
+              placeholder="Create a password"
+              icon={Lock}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
+            />
             {password && (
               <div className="space-y-1">
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div className={cn('h-full rounded-full transition-all duration-300', strength.color)} style={{ width: strength.width }} />
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-100">
+                  <div
+                    className={cn('h-full rounded-full transition-all duration-300', strength.color)}
+                    style={{ width: strength.width }}
+                  />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Password strength: <span className="font-medium">{strengthLabel[strength.level]}</span>
+                <p className="text-xs text-surface-500">
+                  Password strength:{' '}
+                  <span className="font-medium text-surface-700">{strengthLabel[strength.level]}</span>
                 </p>
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium">
-              Confirm Password <span className="text-destructive">*</span>
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="confirmPassword"
-                type={showConfirm ? 'text' : 'password'}
-                placeholder="Re-enter your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={cn('pl-10 pr-10', errors.confirmPassword && 'border-destructive')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-xs text-destructive">{errors.confirmPassword}</p>
-            )}
-          </div>
+          <Input
+            id="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            placeholder="Re-enter your password"
+            icon={Lock}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            error={errors.confirmPassword}
+          />
 
           <div className="space-y-2">
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="terms"
-                checked={agreed}
-                onCheckedChange={(val) => setAgreed(val === true)}
-                className="mt-0.5"
-              />
-              <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-snug">
-                I agree to the{' '}
-                <span className="font-medium text-primary hover:underline cursor-pointer">
-                  Terms of Service
-                </span>{' '}
-                and{' '}
-                <span className="font-medium text-primary hover:underline cursor-pointer">
-                  Privacy Policy
-                </span>
-              </label>
-            </div>
-            {errors.agreed && <p className="text-xs text-destructive">{errors.agreed}</p>}
+            <Checkbox
+              id="terms"
+              label="I agree to the Terms of Service and Privacy Policy"
+              checked={agreed}
+              onCheckedChange={(val) => setAgreed(val === true)}
+              error={errors.agreed}
+            />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              'Create Account'
-            )}
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full"
+            disabled={loading}
+            isLoading={loading}
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-surface-500">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium text-primary hover:underline">
+            <Link to="/login" className="font-medium text-primary-500 hover:text-primary-600">
               Sign in
             </Link>
           </p>

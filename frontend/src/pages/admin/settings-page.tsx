@@ -107,180 +107,186 @@ export default function SettingsPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-[22px] font-semibold text-primary-700">Settings</h1>
+          <p className="mt-1 text-[14px] text-surface-500">
             Configure system-wide settings and defaults.
           </p>
         </div>
 
-        <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <Card className="!p-0">
+          <div className="px-6 pt-4">
+            <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+          </div>
 
-        {activeTab === 'election' && (
-          <Card className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Election Defaults</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <Input
-                label="Max Positions per Election"
-                type="number"
-                min={1}
-                max={50}
-                value={settings.electionDefaults.maxPositions}
-                onChange={(e) =>
-                  updateElection('maxPositions', parseInt(e.target.value) || 1)
-                }
-              />
-              <Input
-                label="Default Duration (days)"
-                type="number"
-                min={1}
-                max={365}
-                value={settings.electionDefaults.defaultDuration}
-                onChange={(e) =>
-                  updateElection('defaultDuration', parseInt(e.target.value) || 1)
-                }
-              />
-            </div>
-            <div className="space-y-3">
-              <Checkbox
-                label="Enable NOTA (None of the Above) by default"
-                checked={settings.electionDefaults.enableNota}
-                onChange={(checked) => updateElection('enableNota', checked)}
-              />
-              <Checkbox
-                label="Allow self-nomination for candidates"
-                checked={settings.electionDefaults.allowSelfNomination}
-                onChange={(checked) => updateElection('allowSelfNomination', checked)}
-              />
-            </div>
-          </Card>
-        )}
+          <div className="p-6">
+            {activeTab === 'election' && (
+              <div className="space-y-6">
+                <h2 className="text-[16px] font-semibold text-surface-800">Election Defaults</h2>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <Input
+                    label="Max Positions per Election"
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={settings.electionDefaults.maxPositions}
+                    onChange={(e) =>
+                      updateElection('maxPositions', parseInt(e.target.value) || 1)
+                    }
+                  />
+                  <Input
+                    label="Default Duration (days)"
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={settings.electionDefaults.defaultDuration}
+                    onChange={(e) =>
+                      updateElection('defaultDuration', parseInt(e.target.value) || 1)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Checkbox
+                    label="Enable NOTA (None of the Above) by default"
+                    checked={settings.electionDefaults.enableNota}
+                    onChange={(checked) => updateElection('enableNota', checked)}
+                  />
+                  <Checkbox
+                    label="Allow self-nomination for candidates"
+                    checked={settings.electionDefaults.allowSelfNomination}
+                    onChange={(checked) => updateElection('allowSelfNomination', checked)}
+                  />
+                </div>
+              </div>
+            )}
 
-        {activeTab === 'auth' && (
-          <Card className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Authentication</h2>
-            <div className="space-y-3">
-              <Checkbox
-                label="Require email verification for new accounts"
-                checked={settings.authentication.requireEmailVerification}
-                onChange={(checked) => updateAuth('requireEmailVerification', checked)}
-              />
-              <Checkbox
-                label="Require phone verification"
-                checked={settings.authentication.requirePhoneVerification}
-                onChange={(checked) => updateAuth('requirePhoneVerification', checked)}
-              />
-              <Checkbox
-                label="Require two-factor authentication for all users"
-                checked={settings.authentication.twoFactorRequired}
-                onChange={(checked) => updateAuth('twoFactorRequired', checked)}
-              />
-            </div>
-            <Input
-              label="Minimum Password Length"
-              type="number"
-              min={6}
-              max={128}
-              value={settings.authentication.passwordMinLength}
-              onChange={(e) =>
-                updateAuth('passwordMinLength', parseInt(e.target.value) || 8)
-              }
-            />
-          </Card>
-        )}
+            {activeTab === 'auth' && (
+              <div className="space-y-6">
+                <h2 className="text-[16px] font-semibold text-surface-800">Authentication</h2>
+                <div className="space-y-3">
+                  <Checkbox
+                    label="Require email verification for new accounts"
+                    checked={settings.authentication.requireEmailVerification}
+                    onChange={(checked) => updateAuth('requireEmailVerification', checked)}
+                  />
+                  <Checkbox
+                    label="Require phone verification"
+                    checked={settings.authentication.requirePhoneVerification}
+                    onChange={(checked) => updateAuth('requirePhoneVerification', checked)}
+                  />
+                  <Checkbox
+                    label="Require two-factor authentication for all users"
+                    checked={settings.authentication.twoFactorRequired}
+                    onChange={(checked) => updateAuth('twoFactorRequired', checked)}
+                  />
+                </div>
+                <Input
+                  label="Minimum Password Length"
+                  type="number"
+                  min={6}
+                  max={128}
+                  value={settings.authentication.passwordMinLength}
+                  onChange={(e) =>
+                    updateAuth('passwordMinLength', parseInt(e.target.value) || 8)
+                  }
+                />
+              </div>
+            )}
 
-        {activeTab === 'notifications' && (
-          <Card className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-            <div className="space-y-3">
-              <Checkbox
-                label="Enable email notifications"
-                checked={settings.notifications.emailNotifications}
-                onChange={(checked) => updateNotifications('emailNotifications', checked)}
-              />
-              <Checkbox
-                label="Enable SMS notifications"
-                checked={settings.notifications.smsNotifications}
-                onChange={(checked) => updateNotifications('smsNotifications', checked)}
-              />
-              <Checkbox
-                label="Send election reminders to voters"
-                checked={settings.notifications.electionReminders}
-                onChange={(checked) => updateNotifications('electionReminders', checked)}
-              />
-              <Checkbox
-                label="Send result notifications when published"
-                checked={settings.notifications.resultNotifications}
-                onChange={(checked) => updateNotifications('resultNotifications', checked)}
-              />
-            </div>
-          </Card>
-        )}
+            {activeTab === 'notifications' && (
+              <div className="space-y-6">
+                <h2 className="text-[16px] font-semibold text-surface-800">Notifications</h2>
+                <div className="space-y-3">
+                  <Checkbox
+                    label="Enable email notifications"
+                    checked={settings.notifications.emailNotifications}
+                    onChange={(checked) => updateNotifications('emailNotifications', checked)}
+                  />
+                  <Checkbox
+                    label="Enable SMS notifications"
+                    checked={settings.notifications.smsNotifications}
+                    onChange={(checked) => updateNotifications('smsNotifications', checked)}
+                  />
+                  <Checkbox
+                    label="Send election reminders to voters"
+                    checked={settings.notifications.electionReminders}
+                    onChange={(checked) => updateNotifications('electionReminders', checked)}
+                  />
+                  <Checkbox
+                    label="Send result notifications when published"
+                    checked={settings.notifications.resultNotifications}
+                    onChange={(checked) => updateNotifications('resultNotifications', checked)}
+                  />
+                </div>
+              </div>
+            )}
 
-        {activeTab === 'security' && (
-          <Card className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Security</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              <Input
-                label="Session Timeout (minutes)"
-                type="number"
-                min={5}
-                max={480}
-                value={settings.security.sessionTimeout}
-                onChange={(e) =>
-                  updateSecurity('sessionTimeout', parseInt(e.target.value) || 30)
-                }
-              />
-              <Input
-                label="Max Login Attempts"
-                type="number"
-                min={1}
-                max={20}
-                value={settings.security.maxLoginAttempts}
-                onChange={(e) =>
-                  updateSecurity('maxLoginAttempts', parseInt(e.target.value) || 5)
-                }
-              />
-              <Input
-                label="Lockout Duration (minutes)"
-                type="number"
-                min={1}
-                max={1440}
-                value={settings.security.lockoutDuration}
-                onChange={(e) =>
-                  updateSecurity('lockoutDuration', parseInt(e.target.value) || 15)
-                }
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                IP Whitelist (one per line)
-              </label>
-              <textarea
-                className={cn(
-                  'block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900',
-                  'placeholder:text-gray-400',
-                  'focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
-                  'min-h-[100px] resize-y font-mono'
-                )}
-                placeholder="192.168.1.0/24&#10;10.0.0.1"
-                value={ipWhitelistText}
-                onChange={(e) => {
-                  setIpWhitelistText(e.target.value);
-                  updateSecurity(
-                    'ipWhitelist',
-                    e.target.value
-                      .split('\n')
-                      .map((l) => l.trim())
-                      .filter(Boolean)
-                  );
-                }}
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Leave empty to allow all IPs. Add one IP or CIDR range per line.
-              </p>
-            </div>
-          </Card>
-        )}
+            {activeTab === 'security' && (
+              <div className="space-y-6">
+                <h2 className="text-[16px] font-semibold text-surface-800">Security</h2>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                  <Input
+                    label="Session Timeout (minutes)"
+                    type="number"
+                    min={5}
+                    max={480}
+                    value={settings.security.sessionTimeout}
+                    onChange={(e) =>
+                      updateSecurity('sessionTimeout', parseInt(e.target.value) || 30)
+                    }
+                  />
+                  <Input
+                    label="Max Login Attempts"
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={settings.security.maxLoginAttempts}
+                    onChange={(e) =>
+                      updateSecurity('maxLoginAttempts', parseInt(e.target.value) || 5)
+                    }
+                  />
+                  <Input
+                    label="Lockout Duration (minutes)"
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={settings.security.lockoutDuration}
+                    onChange={(e) =>
+                      updateSecurity('lockoutDuration', parseInt(e.target.value) || 15)
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[14px] font-medium text-surface-700">
+                    IP Whitelist (one per line)
+                  </label>
+                  <textarea
+                    className={cn(
+                      'block w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-[14px] text-surface-800',
+                      'placeholder:text-surface-400',
+                      'focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
+                      'min-h-[100px] resize-y font-mono'
+                    )}
+                    placeholder="192.168.1.0/24&#10;10.0.0.1"
+                    value={ipWhitelistText}
+                    onChange={(e) => {
+                      setIpWhitelistText(e.target.value);
+                      updateSecurity(
+                        'ipWhitelist',
+                        e.target.value
+                          .split('\n')
+                          .map((l) => l.trim())
+                          .filter(Boolean)
+                      );
+                    }}
+                  />
+                  <p className="mt-1 text-xs text-surface-400">
+                    Leave empty to allow all IPs. Add one IP or CIDR range per line.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
 
         <div className="flex justify-end">
           <Button onClick={() => setShowConfirm(true)} isLoading={isSaving}>

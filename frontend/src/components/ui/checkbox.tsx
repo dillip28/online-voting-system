@@ -17,7 +17,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
 
     return (
       <div className="w-full">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="relative">
             <input
               ref={ref}
@@ -31,28 +31,27 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             <label
               htmlFor={checkboxId}
               className={cn(
-                'flex h-5 w-5 cursor-pointer items-center justify-center rounded border transition-colors',
-                'border-gray-300 bg-white',
-                'peer-checked:border-primary-600 peer-checked:bg-primary-600',
-                'peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-2',
-                'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
+                'flex h-[18px] w-[18px] cursor-pointer items-center justify-center rounded border transition-colors',
+                'border-surface-300 bg-white',
+                'peer-checked:border-primary-500 peer-checked:bg-primary-500',
+                'peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500/20',
                 error && 'border-danger-500',
                 className
               )}
             >
-              {checked && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}
+              {checked && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
             </label>
           </div>
           {label && (
             <label
               htmlFor={checkboxId}
-              className="cursor-pointer text-sm text-gray-700 dark:text-gray-300"
+              className="cursor-pointer text-sm text-surface-600"
             >
               {label}
             </label>
           )}
         </div>
-        {error && <p className="mt-1 text-sm text-danger-600">{error}</p>}
+        {error && <p className="mt-1 text-xs text-danger-500">{error}</p>}
       </div>
     );
   }

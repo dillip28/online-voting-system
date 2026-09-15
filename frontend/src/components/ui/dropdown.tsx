@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { ElementType } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import type { ElementType } from 'react';
 
 interface DropdownItem {
   label: string;
@@ -10,52 +10,54 @@ interface DropdownItem {
 }
 
 interface DropdownProps {
-  trigger: ReactNode;
+  trigger: React.ReactNode;
   items: DropdownItem[];
+  align?: 'left' | 'right';
 }
 
-function Dropdown({ trigger, items }: DropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
+function Dropdown({ trigger, items, align = 'right' }: DropdownProps) {
+  const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        setOpen(false);
       }
-    };
-
+    }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
-    <div ref={ref} className="relative inline-block">
-      <div onClick={() => setIsOpen(!isOpen)}>{trigger}</div>
-      {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 min-w-[180px] rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-          {items.map((item, i) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={i}
-                onClick={() => {
-                  item.onClick();
-                  setIsOpen(false);
-                }}
-                className={cn(
-                  'flex w-full items-center gap-2 px-4 py-2 text-left text-sm',
-                  'hover:bg-gray-100',
-                  item.danger
-                    ? 'text-danger-600 hover:bg-danger-50'
-                    : 'text-gray-700'
-                )}
-              >
-                {Icon && <Icon className="h-4 w-4" />}
-                {item.label}
-              </button>
-            );
-          })}
+    <div className="relative" ref={ref}>
+      <div onClick={() => setOpen(!open)}>{trigger}</div>
+      {open && (
+        <div
+          className={cn(
+            'absolute top-full z-50 mt-1 min-w-[160px] rounded-lg border border-surface-200 bg-white py-1 shadow-md',
+            align === 'right' ? 'right-0' : 'left-0'
+          )}
+        >
+          {items.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => {
+                item.onClick();
+                setOpen(false);
+              }}
+              className={cn(
+                'flex w-full items-center gap-2 px-3 py-2 text-left text-sm',
+                item.danger
+                  ? 'text-danger-500 hover:bg-danger-50'
+                  : 'text-surface-600 hover:bg-surface-50'
+              )}
+            >
+              {item.icon && <item.icon className="h-4 w-4" />}
+              {item.label}
+            </button>
+          ))}
         </div>
       )}
     </div>

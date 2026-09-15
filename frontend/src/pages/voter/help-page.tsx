@@ -82,43 +82,43 @@ export default function HelpPage() {
     <DashboardLayout>
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Help Center</h1>
-          <p className="mt-1 text-gray-500 dark:text-gray-400">
+          <h1 className="text-[22px] font-bold text-primary-700">Help Center</h1>
+          <p className="mt-1 text-[14px] text-surface-500">
             Find answers to common questions or contact support
           </p>
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
           <Input
             placeholder="Search help topics..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 border-surface-200 rounded-md text-[14px]"
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {quickLinks.map((link) => (
-            <Card key={link.title} hover className="cursor-pointer text-center">
-              <link.icon className="mx-auto mb-2 h-8 w-8 text-primary-600 dark:text-primary-400" />
-              <h3 className="font-medium text-gray-900 dark:text-white">{link.title}</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <Card key={link.title} className="border border-surface-200 rounded-lg bg-white cursor-pointer text-center p-5 hover:border-primary-300 transition-colors">
+              <link.icon className="mx-auto mb-2 h-7 w-7 text-primary-600" />
+              <h3 className="text-[14px] font-semibold text-primary-700">{link.title}</h3>
+              <p className="mt-1 text-[13px] text-surface-500">
                 {link.description}
               </p>
             </Card>
           ))}
         </div>
 
-        <Card>
-          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <Card className="border border-surface-200 rounded-lg bg-white">
+          <h2 className="mb-4 text-[16px] font-semibold text-primary-700">
             Frequently Asked Questions
           </h2>
           <div className="space-y-2">
             {filteredFaq.map((item) => (
               <div
                 key={item.question}
-                className="rounded-lg border border-gray-200 dark:border-gray-700"
+                className="rounded-lg border border-surface-200"
               >
                 <button
                   type="button"
@@ -127,18 +127,18 @@ export default function HelpPage() {
                   }
                   className="flex w-full items-center justify-between p-4 text-left"
                 >
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  <span className="text-[14px] font-medium text-primary-700">
                     {item.question}
                   </span>
                   {expandedFaq === item.question ? (
-                    <ChevronUp className="h-5 w-5 shrink-0 text-gray-400" />
+                    <ChevronUp className="h-4 w-4 shrink-0 text-surface-400" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 shrink-0 text-gray-400" />
+                    <ChevronDown className="h-4 w-4 shrink-0 text-surface-400" />
                   )}
                 </button>
                 {expandedFaq === item.question && (
-                  <div className="border-t border-gray-200 px-4 pb-4 pt-3 dark:border-gray-700">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <div className="border-t border-surface-200 px-4 pb-4 pt-3">
+                    <p className="text-[13px] text-surface-600 leading-relaxed">
                       {item.answer}
                     </p>
                   </div>
@@ -146,34 +146,34 @@ export default function HelpPage() {
               </div>
             ))}
             {filteredFaq.length === 0 && (
-              <p className="py-8 text-center text-gray-500">
+              <p className="py-8 text-center text-[14px] text-surface-500">
                 No matching questions found. Try a different search term.
               </p>
             )}
           </div>
         </Card>
 
-        <Card>
-          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <Card className="border border-surface-200 rounded-lg bg-white">
+          <h2 className="mb-4 text-[16px] font-semibold text-primary-700">
             Contact Support
           </h2>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                <Mail className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-100">
+                <Mail className="h-4 w-4 text-surface-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Email</p>
-                <p className="text-sm text-gray-500">support@votesecure.com</p>
+                <p className="text-[14px] font-medium text-primary-700">Email</p>
+                <p className="text-[13px] text-surface-500">support@votesecure.com</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-100">
+                <MessageSquare className="h-4 w-4 text-surface-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Live Chat</p>
-                <p className="text-sm text-gray-500">Available Mon-Fri, 9AM-5PM EST</p>
+                <p className="text-[14px] font-medium text-primary-700">Live Chat</p>
+                <p className="text-[13px] text-surface-500">Available Mon-Fri, 9AM-5PM EST</p>
               </div>
             </div>
           </div>

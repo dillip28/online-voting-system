@@ -26,13 +26,13 @@ const iconMap: Record<NotificationType, React.ElementType> = {
 };
 
 const iconColorMap: Record<NotificationType, string> = {
-  election_start: 'text-success-500 bg-success-100 dark:bg-success-900/30',
-  election_end: 'text-gray-500 bg-gray-100 dark:bg-gray-800',
-  vote_submitted: 'text-primary-500 bg-primary-100 dark:bg-primary-900/30',
-  results_published: 'text-info-500 bg-info-100 dark:bg-info-900/30',
-  security_alert: 'text-danger-500 bg-danger-100 dark:bg-danger-900/30',
-  system: 'text-gray-500 bg-gray-100 dark:bg-gray-800',
-  reminder: 'text-warning-500 bg-warning-100 dark:bg-warning-900/30',
+  election_start: 'text-accent-600 bg-accent-50',
+  election_end: 'text-surface-500 bg-surface-100',
+  vote_submitted: 'text-primary-600 bg-primary-50',
+  results_published: 'text-accent-600 bg-accent-50',
+  security_alert: 'text-danger-500 bg-danger-50',
+  system: 'text-surface-500 bg-surface-100',
+  reminder: 'text-primary-600 bg-primary-50',
 };
 
 export default function NotificationsPage() {
@@ -47,7 +47,7 @@ export default function NotificationsPage() {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-7 w-48" />
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-20" />
@@ -63,15 +63,15 @@ export default function NotificationsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
-            <p className="mt-1 text-gray-500 dark:text-gray-400">
+            <h1 className="text-[22px] font-bold text-primary-700">Notifications</h1>
+            <p className="mt-1 text-[14px] text-surface-500">
               {unreadCount > 0
                 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
                 : 'All caught up!'}
             </p>
           </div>
           {unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={markAllAsRead}>
+            <Button variant="outline" size="sm" onClick={markAllAsRead} className="border-surface-200 text-primary-600 hover:bg-primary-50 rounded-md">
               <CheckCheck className="mr-2 h-4 w-4" />
               Mark All as Read
             </Button>
@@ -93,43 +93,43 @@ export default function NotificationsPage() {
               return (
                 <Card
                   key={notification.id}
-                  hover
                   className={cn(
-                    'cursor-pointer transition-colors',
-                    !notification.isRead &&
-                      'border-l-4 border-l-primary-500 bg-primary-50/50 dark:bg-primary-900/10'
+                    'border rounded-lg bg-white cursor-pointer transition-colors',
+                    !notification.isRead
+                      ? 'border-l-[3px] border-l-primary-500 border-surface-200 bg-primary-50/30'
+                      : 'border-surface-200'
                   )}
                   onClick={() => markAsRead(notification.id)}
                 >
                   <div className="flex items-start gap-4">
                     <div
                       className={cn(
-                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
                         iconColor
                       )}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <h4
                           className={cn(
-                            'text-sm font-medium',
+                            'text-[14px] font-medium',
                             notification.isRead
-                              ? 'text-gray-700 dark:text-gray-300'
-                              : 'text-gray-900 dark:text-white'
+                              ? 'text-surface-500'
+                              : 'text-primary-700'
                           )}
                         >
                           {notification.title}
                         </h4>
                         {!notification.isRead && (
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-primary-500" />
+                          <span className="h-2 w-2 shrink-0 rounded-full bg-primary-500 mt-1" />
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      <p className="mt-1 text-[13px] text-surface-500 leading-relaxed">
                         {notification.message}
                       </p>
-                      <p className="mt-2 text-xs text-gray-400">
+                      <p className="mt-2 text-[12px] text-surface-400">
                         {timeAgo(notification.createdAt)}
                       </p>
                     </div>

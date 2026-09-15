@@ -35,29 +35,29 @@ const typeBadgeVariant: Record<ElectionType, 'default' | 'info' | 'success' | 'w
 
 function ElectionCard({ election }: { election: any }) {
   return (
-    <Card hover className="flex flex-col justify-between">
+    <Card className="border border-surface-200 rounded-lg bg-white flex flex-col justify-between">
       <div>
         <div className="mb-3 flex items-start justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-[15px] font-semibold text-primary-700 leading-snug">
             {election.title}
           </h3>
-          <Badge variant={typeBadgeVariant[election.type as ElectionType]}>
+          <Badge variant={typeBadgeVariant[election.type as ElectionType]} className="text-xs">
             {election.type}
           </Badge>
         </div>
-        <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+        <p className="mb-2 text-[13px] font-medium text-surface-600">
           {election.organization}
         </p>
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mb-4 text-[13px] text-surface-500 leading-relaxed">
           {truncate(election.description, 120)}
         </p>
-        <div className="mb-3 flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
-          <span className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
-            {formatDate(election.startDate)} - {formatDate(election.endDate)}
+        <div className="mb-3 flex flex-wrap items-center gap-4 text-[13px] text-surface-600">
+          <span className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-surface-400" />
+            {formatDate(election.startDate)} — {formatDate(election.endDate)}
           </span>
-          <span className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
+          <span className="flex items-center gap-1.5">
+            <Users className="h-3.5 w-3.5 text-surface-400" />
             {election.totalCandidates} candidates
           </span>
         </div>
@@ -65,9 +65,9 @@ function ElectionCard({ election }: { election: any }) {
       </div>
       <div className="mt-4">
         <Link to={`/elections/${election.id}`}>
-          <Button variant="outline" size="sm" className="w-full">
+          <Button variant="outline" size="sm" className="w-full border-surface-200 text-primary-600 hover:bg-primary-50 rounded-md">
             View Details
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="ml-2 h-3.5 w-3.5" />
           </Button>
         </Link>
       </div>
@@ -125,14 +125,14 @@ export default function ElectionsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Elections</h1>
+          <h1 className="text-[22px] font-bold text-primary-700">Elections</h1>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
             <Input
               placeholder="Search elections..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 sm:w-72"
+              className="pl-10 sm:w-72 border-surface-200 rounded-md text-[14px]"
             />
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function ElectionsPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="rounded-md border border-surface-200 bg-white px-3 py-2 text-[13px] text-surface-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             {sortOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>

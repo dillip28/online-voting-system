@@ -4,21 +4,21 @@ import { cn } from '@/lib/utils';
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'outline';
 
 interface BadgeProps {
-  variant?: BadgeVariant;
   children: ReactNode;
+  variant?: BadgeVariant;
   className?: string;
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-gray-100 text-gray-800',
-  success: 'bg-success-100 text-success-800',
-  warning: 'bg-warning-100 text-warning-800',
-  danger: 'bg-danger-100 text-danger-800',
-  info: 'bg-info-100 text-info-800',
-  outline: 'border border-gray-300 text-gray-700',
+  default: 'bg-surface-100 text-surface-600 border border-surface-200',
+  success: 'bg-success-50 text-success-600 border border-success-500/20',
+  warning: 'bg-warning-50 text-warning-600 border border-warning-500/20',
+  danger: 'bg-danger-50 text-danger-500 border border-danger-500/20',
+  info: 'bg-info-50 text-info-600 border border-info-500/20',
+  outline: 'bg-transparent text-surface-600 border border-surface-200',
 };
 
-function Badge({ variant = 'default', children, className }: BadgeProps) {
+function Badge({ children, variant = 'default', className }: BadgeProps) {
   return (
     <span
       className={cn(

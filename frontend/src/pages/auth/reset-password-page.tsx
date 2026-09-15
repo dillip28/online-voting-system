@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, Eye, EyeOff, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Lock, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import type { FormEvent } from 'react';
 type PasswordStrength = 'weak' | 'fair' | 'strong';
 
 function getPasswordStrength(password: string): { level: PasswordStrength; color: string; width: string } {
-  if (!password) return { level: 'weak', color: 'bg-destructive', width: '0%' };
+  if (!password) return { level: 'weak', color: 'bg-danger-500', width: '0%' };
   let score = 0;
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
@@ -19,17 +19,15 @@ function getPasswordStrength(password: string): { level: PasswordStrength; color
   if (/\d/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 2) return { level: 'weak', color: 'bg-destructive', width: '33%' };
-  if (score <= 3) return { level: 'fair', color: 'bg-yellow-500', width: '66%' };
-  return { level: 'strong', color: 'bg-green-500', width: '100%' };
+  if (score <= 2) return { level: 'weak', color: 'bg-danger-500', width: '33%' };
+  if (score <= 3) return { level: 'fair', color: 'bg-warning-500', width: '66%' };
+  return { level: 'strong', color: 'bg-success-500', width: '100%' };
 }
 
 export default function ResetPasswordPage() {
   const { toast } = useToast();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
@@ -62,7 +60,6 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      // In a real app, this would validate the token from URL params and call an API
       await new Promise((resolve) => setTimeout(resolve, 1500));
       setSuccess(true);
       toast('success', 'Your password has been successfully reset.');
@@ -75,20 +72,24 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur-sm">
+      <Card className="w-full max-w-md">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center space-y-4 text-center">
-            <div className="rounded-full bg-green-500/10 p-3">
-              <CheckCircle2 className="h-10 w-10 text-green-500" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success-50">
+              <CheckCircle2 className="h-6 w-6 text-success-500" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-xl font-bold tracking-tight">Password reset successful</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-[20px] font-bold tracking-tight text-surface-900">
+                Password reset successful
+              </h2>
+              <p className="text-sm text-surface-500">
                 Your password has been updated. You can now sign in with your new password.
               </p>
             </div>
             <Link to="/login" className="w-full">
-              <Button className="w-full">Sign In</Button>
+              <Button variant="primary" className="w-full">
+                Sign In
+              </Button>
             </Link>
           </div>
         </CardContent>
@@ -97,96 +98,69 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur-sm">
+    <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold tracking-tight">Reset password</CardTitle>
-        <CardDescription className="text-muted-foreground">
+        <CardTitle className="text-[20px] font-bold tracking-tight text-surface-900">
+          Reset password
+        </CardTitle>
+        <CardDescription className="text-sm text-surface-500">
           Enter your new password below
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              New password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter new password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={cn('pl-10 pr-10', errors.password && 'border-destructive')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
-
+            <Input
+              id="password"
+              label="New password"
+              type="password"
+              placeholder="Enter new password"
+              icon={Lock}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
+            />
             {password && (
               <div className="space-y-1">
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-100">
                   <div
                     className={cn('h-full rounded-full transition-all duration-300', strength.color)}
                     style={{ width: strength.width }}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Password strength: <span className="font-medium">{strengthLabel[strength.level]}</span>
+                <p className="text-xs text-surface-500">
+                  Password strength:{' '}
+                  <span className="font-medium text-surface-700">{strengthLabel[strength.level]}</span>
                 </p>
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium">
-              Confirm password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="confirmPassword"
-                type={showConfirm ? 'text' : 'password'}
-                placeholder="Re-enter new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={cn('pl-10 pr-10', errors.confirmPassword && 'border-destructive')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-xs text-destructive">{errors.confirmPassword}</p>
-            )}
-          </div>
+          <Input
+            id="confirmPassword"
+            label="Confirm password"
+            type="password"
+            placeholder="Re-enter new password"
+            icon={Lock}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            error={errors.confirmPassword}
+          />
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Resetting password...
-              </>
-            ) : (
-              'Reset Password'
-            )}
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full"
+            disabled={loading}
+            isLoading={loading}
+          >
+            {loading ? 'Resetting password...' : 'Reset Password'}
           </Button>
 
           <div className="text-center">
             <Link
               to="/login"
-              className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+              className="inline-flex items-center text-sm font-medium text-primary-500 hover:text-primary-600"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
               Back to sign in

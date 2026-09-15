@@ -6,63 +6,38 @@ interface SkeletonProps {
 
 function Skeleton({ className }: SkeletonProps) {
   return (
-    <div
-      className={cn(
-        'animate-pulse rounded-lg bg-gray-200',
-        className
-      )}
-    />
+    <div className={cn('animate-pulse rounded bg-surface-100', className)} />
   );
 }
 
-function SkeletonCard({ className }: SkeletonProps) {
+function SkeletonCard() {
   return (
-    <div className={cn('rounded-xl border border-gray-200 p-6', className)}>
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-12 w-12 rounded-full" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-1/3" />
-          <Skeleton className="h-3 w-1/2" />
-        </div>
-      </div>
-      <div className="mt-4 space-y-3">
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-5/6" />
-        <Skeleton className="h-3 w-4/6" />
-      </div>
+    <div className="rounded-lg border border-surface-200 bg-white p-5">
+      <Skeleton className="mb-3 h-4 w-3/4" />
+      <Skeleton className="mb-2 h-3 w-1/2" />
+      <Skeleton className="h-3 w-2/3" />
     </div>
   );
 }
 
-function SkeletonTable({ rows = 5, cols = 4, className }: SkeletonProps & { rows?: number; cols?: number }) {
+function SkeletonTable({ rows = 5 }: { rows?: number }) {
   return (
-    <div className={cn('w-full space-y-3', className)}>
-      <div className="flex gap-4">
-        {Array.from({ length: cols }).map((_, i) => (
-          <Skeleton key={`h-${i}`} className="h-4 flex-1" />
-        ))}
-      </div>
-      {Array.from({ length: rows }).map((_, rowIdx) => (
-        <div key={rowIdx} className="flex gap-4">
-          {Array.from({ length: cols }).map((_, colIdx) => (
-            <Skeleton key={`c-${rowIdx}-${colIdx}`} className="h-4 flex-1" />
-          ))}
-        </div>
+    <div className="space-y-3">
+      <Skeleton className="h-10 w-full" />
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full" />
       ))}
     </div>
   );
 }
 
-function SkeletonText({ lines = 3, className }: SkeletonProps & { lines?: number }) {
+function SkeletonText({ lines = 3 }: { lines?: number }) {
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className="space-y-2">
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
-          className={cn(
-            'h-3',
-            i === lines - 1 ? 'w-3/4' : 'w-full'
-          )}
+          className={cn('h-3', i === lines - 1 ? 'w-2/3' : 'w-full')}
         />
       ))}
     </div>

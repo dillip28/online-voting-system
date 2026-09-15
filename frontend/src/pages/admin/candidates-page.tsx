@@ -173,8 +173,8 @@ export default function CandidatesPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Candidates</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-[22px] font-semibold text-primary-700">Candidates</h1>
+            <p className="mt-1 text-[14px] text-surface-500">
               Manage candidates across all elections.
             </p>
           </div>
@@ -248,18 +248,18 @@ export default function CandidatesPage() {
                       <TableRow key={candidate.id}>
                         <TableCell>
                           <div>
-                            <p className="font-medium text-gray-900">{candidate.name}</p>
-                            <p className="text-xs text-gray-500">{candidate.position?.title ?? 'N/A'}</p>
+                            <p className="font-medium text-surface-800">{candidate.name}</p>
+                            <p className="text-xs text-surface-400">{candidate.position?.title ?? 'N/A'}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-gray-600">
+                        <TableCell className="text-[14px] text-surface-600">
                           {election?.title ?? 'Unknown'}
                         </TableCell>
-                        <TableCell>{candidate.party ?? 'Independent'}</TableCell>
+                        <TableCell className="text-[14px] text-surface-600">{candidate.party ?? 'Independent'}</TableCell>
                         <TableCell>
                           <StatusBadge status={candidate.status} />
                         </TableCell>
-                        <TableCell className="text-center">{candidate.votesReceived}</TableCell>
+                        <TableCell className="text-center text-[14px] text-surface-700">{candidate.votesReceived}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {candidate.status === 'pending' && (
@@ -285,7 +285,7 @@ export default function CandidatesPage() {
                               size="sm"
                               onClick={() => openEditModal(candidate)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="h-4 w-4 text-surface-500" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -304,7 +304,7 @@ export default function CandidatesPage() {
             </Card>
 
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+              <p className="text-[14px] text-surface-500">
                 Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
                 {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}{' '}
                 candidates
@@ -346,11 +346,11 @@ export default function CandidatesPage() {
             onChange={(e) => updateField('party', e.target.value)}
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Biography</label>
+            <label className="mb-1 block text-[14px] font-medium text-surface-700">Biography</label>
             <textarea
               className={cn(
-                'block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900',
-                'placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
+                'block w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-[14px] text-surface-800',
+                'placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
                 'min-h-[80px] resize-y'
               )}
               placeholder="Brief biography..."
@@ -359,11 +359,11 @@ export default function CandidatesPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Manifesto</label>
+            <label className="mb-1 block text-[14px] font-medium text-surface-700">Manifesto</label>
             <textarea
               className={cn(
-                'block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900',
-                'placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
+                'block w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-[14px] text-surface-800',
+                'placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
                 'min-h-[80px] resize-y'
               )}
               placeholder="Election manifesto..."
@@ -371,7 +371,7 @@ export default function CandidatesPage() {
               onChange={(e) => updateField('manifesto', e.target.value)}
             />
           </div>
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-100">
             <Button variant="outline" onClick={() => setShowModal(false)}>
               Cancel
             </Button>

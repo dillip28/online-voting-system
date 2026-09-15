@@ -35,12 +35,12 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
           <div className="flex items-center gap-2">
             <div
               className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors',
+                'flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-medium transition-colors',
                 index < currentIndex
-                  ? 'bg-success-500 text-white'
+                  ? 'bg-accent-600 text-white'
                   : index === currentIndex
                   ? 'bg-primary-600 text-white'
-                  : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                  : 'bg-surface-200 text-surface-500'
               )}
             >
               {index < currentIndex ? (
@@ -51,10 +51,10 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
             </div>
             <span
               className={cn(
-                'hidden text-sm font-medium sm:block',
+                'hidden text-[13px] font-medium sm:block',
                 index <= currentIndex
-                  ? 'text-gray-900 dark:text-white'
-                  : 'text-gray-400'
+                  ? 'text-primary-700'
+                  : 'text-surface-400'
               )}
             >
               {step.label}
@@ -64,7 +64,7 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
             <div
               className={cn(
                 'mx-3 h-0.5 w-8 sm:w-16',
-                index < currentIndex ? 'bg-success-500' : 'bg-gray-200 dark:bg-gray-700'
+                index < currentIndex ? 'bg-accent-500' : 'bg-surface-200'
               )}
             />
           )}
@@ -86,19 +86,19 @@ function SelectStep() {
   return (
     <div className="space-y-6">
       {!warningDismissed && (
-        <div className="flex items-start gap-3 rounded-lg border border-warning-200 bg-warning-50 p-4 dark:border-warning-800 dark:bg-warning-900/20">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning-600" />
+        <div className="flex items-start gap-3 rounded-lg border border-surface-200 bg-surface-50 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-surface-500" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-warning-800 dark:text-warning-300">
+            <p className="text-[13px] font-medium text-primary-700">
               Your vote has not been submitted yet.
             </p>
-            <p className="mt-1 text-sm text-warning-700 dark:text-warning-400">
+            <p className="mt-1 text-[13px] text-surface-500">
               Please review your selections carefully. Once submitted, your vote cannot be changed.
             </p>
           </div>
           <button
             onClick={() => setWarningDismissed(true)}
-            className="text-warning-600 hover:text-warning-800"
+            className="text-surface-400 hover:text-surface-600 text-lg leading-none"
           >
             ×
           </button>
@@ -113,7 +113,7 @@ function SelectStep() {
 
         return (
           <div key={position.id}>
-            <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="mb-4 text-[15px] font-semibold text-primary-700">
               {position.title}
             </h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -124,16 +124,16 @@ function SelectStep() {
                     key={candidate.id}
                     onClick={() => selectCandidate(position.id, candidate.id)}
                     className={cn(
-                      'flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all',
+                      'flex items-start gap-4 rounded-lg border p-4 text-left transition-all',
                       isSelected
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                        ? 'border-primary-500 bg-primary-50/50 ring-1 ring-primary-500'
+                        : 'border-surface-200 hover:border-surface-300 bg-white'
                     )}
                   >
                     <Avatar src={candidate.photo} name={candidate.name} size="md" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white">
+                        <h4 className="text-[14px] font-medium text-primary-700">
                           {candidate.name}
                         </h4>
                         {candidate.party && (
@@ -142,7 +142,7 @@ function SelectStep() {
                           </Badge>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      <p className="mt-1 text-[13px] text-surface-500 leading-relaxed">
                         {candidate.manifesto.length > 150
                           ? candidate.manifesto.slice(0, 150) + '...'
                           : candidate.manifesto}
@@ -153,7 +153,7 @@ function SelectStep() {
                         'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2',
                         isSelected
                           ? 'border-primary-500 bg-primary-500'
-                          : 'border-gray-300 dark:border-gray-600'
+                          : 'border-surface-300'
                       )}
                     >
                       {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -168,11 +168,12 @@ function SelectStep() {
 
       {currentElection?.enableNota && (
         <div>
-          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="mb-4 text-[15px] font-semibold text-primary-700">
             None of the Above (NOTA)
           </h3>
           <Button
             variant="outline"
+            className="border-surface-200 text-primary-600 hover:bg-primary-50 rounded-md"
             onClick={() => {
               positions.forEach((p) => {
                 if (!selections.has(p.id)) {
@@ -199,14 +200,14 @@ function ReviewStep() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-        <h3 className="font-medium text-gray-900 dark:text-white">Your Selections</h3>
-        <p className="mt-1 text-sm text-gray-500">
+      <div className="rounded-lg border border-surface-200 bg-surface-50 p-4">
+        <h3 className="text-[14px] font-semibold text-primary-700">Your Selections</h3>
+        <p className="mt-1 text-[13px] text-surface-500">
           Please review your selections before submitting.
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {positions.map((position) => {
           const selectedId = selections.get(position.id);
           const candidate = candidates.find((c) => c.id === selectedId);
@@ -215,30 +216,30 @@ function ReviewStep() {
           return (
             <div
               key={position.id}
-              className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+              className="flex items-center justify-between rounded-lg border border-surface-200 bg-white p-4"
             >
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{position.title}</p>
-                <p className="font-medium text-gray-900 dark:text-white">
+                <p className="text-[12px] text-surface-400 uppercase tracking-wide">{position.title}</p>
+                <p className="text-[14px] font-medium text-primary-700">
                   {isNota ? 'None of the Above (NOTA)' : candidate?.name || 'Not selected'}
                 </p>
               </div>
               {selectedId && (
-                <CheckCircle className="h-5 w-5 text-success-500" />
+                <CheckCircle className="h-5 w-5 text-accent-600" />
               )}
             </div>
           );
         })}
       </div>
 
-      <div className="rounded-lg border border-warning-200 bg-warning-50 p-4 dark:border-warning-800 dark:bg-warning-900/20">
+      <div className="rounded-lg border border-surface-200 bg-surface-50 p-4">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning-600" />
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-surface-500" />
           <div>
-            <p className="text-sm font-medium text-warning-800 dark:text-warning-300">
+            <p className="text-[13px] font-semibold text-primary-700">
               Important
             </p>
-            <p className="mt-1 text-sm text-warning-700 dark:text-warning-400">
+            <p className="mt-1 text-[13px] text-surface-500">
               Once submitted, your vote cannot be changed or withdrawn. Please ensure all selections are correct.
             </p>
           </div>
@@ -255,18 +256,18 @@ function ConfirmStep() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
-          <Vote className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-100">
+          <Vote className="h-7 w-7 text-primary-600" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-[16px] font-semibold text-primary-700">
           Confirm Your Vote
         </h3>
-        <p className="mt-1 text-gray-500">
+        <p className="mt-1 text-[14px] text-surface-500">
           Please confirm that your selections are correct before submitting.
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <div className="rounded-lg border border-surface-200 bg-white p-4">
         <Checkbox
           label="I confirm that my selections are correct and I want to submit my vote"
           checked={confirmed}
@@ -276,13 +277,13 @@ function ConfirmStep() {
 
       <Button
         size="lg"
-        className="w-full"
+        className="w-full bg-primary-600 hover:bg-primary-700 text-white rounded-md"
         disabled={!confirmed || isSubmitting}
         onClick={submitVote}
       >
         {isSubmitting ? (
           <>
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Submitting...
           </>
         ) : (
@@ -298,41 +299,43 @@ function SuccessStep() {
 
   return (
     <div className="space-y-6 text-center">
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
-        <CheckCircle className="h-10 w-10 text-success-500" />
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent-50">
+        <CheckCircle className="h-8 w-8 text-accent-600" />
       </div>
       <div>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h3 className="text-[20px] font-bold text-primary-700">
           Vote Submitted Successfully
         </h3>
-        <p className="mt-2 text-gray-500">Your vote has been recorded.</p>
+        <p className="mt-2 text-[14px] text-surface-500">Your vote has been recorded.</p>
       </div>
 
-      <div className="mx-auto max-w-sm space-y-3 rounded-xl border border-gray-200 p-6 text-left dark:border-gray-700">
+      <div className="mx-auto max-w-sm space-y-3 rounded-lg border border-surface-200 bg-white p-6 text-left">
         <div className="flex justify-between">
-          <span className="text-gray-500">Election</span>
-          <span className="font-medium text-gray-900 dark:text-white">
+          <span className="text-[13px] text-surface-500">Election</span>
+          <span className="text-[14px] font-medium text-primary-700">
             {selectedElection?.title}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500">Date & Time</span>
-          <span className="font-medium text-gray-900 dark:text-white">
+          <span className="text-[13px] text-surface-500">Date & Time</span>
+          <span className="text-[14px] font-medium text-primary-700">
             {submissionResult?.submittedAt
               ? new Date(submissionResult.submittedAt).toLocaleString()
               : '-'}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500">Confirmation ID</span>
-          <span className="font-mono font-medium text-primary-600 dark:text-primary-400">
+          <span className="text-[13px] text-surface-500">Confirmation ID</span>
+          <span className="font-mono text-[14px] font-medium text-accent-600">
             {submissionResult?.confirmationId}
           </span>
         </div>
       </div>
 
       <Link to="/dashboard">
-        <Button size="lg">Return to Dashboard</Button>
+        <Button size="lg" className="bg-primary-600 hover:bg-primary-700 text-white rounded-md">
+          Return to Dashboard
+        </Button>
       </Link>
     </div>
   );
@@ -373,8 +376,8 @@ export default function VotePage() {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-2xl space-y-6">
-          <Skeleton className="h-8 w-64 mx-auto" />
-          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-6 w-64 mx-auto" />
+          <Skeleton className="h-10 w-full" />
           <Skeleton className="h-64 w-full" />
         </div>
       </DashboardLayout>
@@ -398,21 +401,21 @@ export default function VotePage() {
       <div className="mx-auto max-w-2xl space-y-6">
         <Link
           to={`/elections/${id}`}
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          className="inline-flex items-center gap-2 text-[13px] font-medium text-surface-500 hover:text-primary-600 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Election
         </Link>
 
         <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-[18px] font-bold text-primary-700">
             {currentElection.title}
           </h1>
         </div>
 
         {currentStep !== 'success' && <StepIndicator currentStep={currentStep} />}
 
-        <Card>
+        <Card className="border border-surface-200 rounded-lg bg-white">
           {currentStep === 'select' && <SelectStep />}
           {currentStep === 'review' && <ReviewStep />}
           {currentStep === 'confirm' && <ConfirmStep />}
@@ -423,10 +426,11 @@ export default function VotePage() {
           <div className="flex justify-end">
             <Button
               size="lg"
+              className="bg-primary-600 hover:bg-primary-700 text-white rounded-md"
               onClick={() => useVotingStore.getState().setStep('review')}
             >
               Review Selections
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         )}
@@ -436,17 +440,19 @@ export default function VotePage() {
             <Button
               variant="outline"
               size="lg"
+              className="border-surface-200 text-primary-600 hover:bg-primary-50 rounded-md"
               onClick={() => useVotingStore.getState().setStep('select')}
             >
-              <ArrowLeft className="mr-2 h-5 w-5" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Edit
             </Button>
             <Button
               size="lg"
+              className="bg-primary-600 hover:bg-primary-700 text-white rounded-md"
               onClick={() => useVotingStore.getState().setStep('confirm')}
             >
               Proceed to Submit
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         )}

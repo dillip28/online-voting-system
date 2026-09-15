@@ -122,10 +122,10 @@ export default function ElectionDetailPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Elections
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900">{election.title}</h1>
+            <h1 className="text-[22px] font-semibold text-surface-900">{election.title}</h1>
             <div className="mt-2 flex items-center gap-3">
               <StatusBadge status={election.status as ElectionStatus} />
-              <span className="text-sm text-gray-500">{election.organization}</span>
+              <span className="text-sm text-surface-500">{election.organization}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -157,27 +157,27 @@ export default function ElectionDetailPage() {
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">Election Details</h3>
+              <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Election Details</h3>
               <dl className="space-y-3">
-                <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">Type</dt>
-                  <dd className="text-sm font-medium capitalize text-gray-900">{election.type}</dd>
+                <div className="flex justify-between border-b border-surface-100 pb-3">
+                  <dt className="text-sm text-surface-500">Type</dt>
+                  <dd className="text-sm font-medium capitalize text-surface-900">{election.type}</dd>
+                </div>
+                <div className="flex justify-between border-b border-surface-100 pb-3">
+                  <dt className="text-sm text-surface-500">Organization</dt>
+                  <dd className="text-sm font-medium text-surface-900">{election.organization}</dd>
+                </div>
+                <div className="flex justify-between border-b border-surface-100 pb-3">
+                  <dt className="text-sm text-surface-500">Positions</dt>
+                  <dd className="text-sm font-medium text-surface-900">{election.totalPositions}</dd>
+                </div>
+                <div className="flex justify-between border-b border-surface-100 pb-3">
+                  <dt className="text-sm text-surface-500">Max Selections</dt>
+                  <dd className="text-sm font-medium text-surface-900">{election.maxSelections}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">Organization</dt>
-                  <dd className="text-sm font-medium text-gray-900">{election.organization}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">Positions</dt>
-                  <dd className="text-sm font-medium text-gray-900">{election.totalPositions}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">Max Selections</dt>
-                  <dd className="text-sm font-medium text-gray-900">{election.maxSelections}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">NOTA Enabled</dt>
-                  <dd className="text-sm font-medium text-gray-900">
+                  <dt className="text-sm text-surface-500">NOTA Enabled</dt>
+                  <dd className="text-sm font-medium text-surface-900">
                     {election.enableNota ? 'Yes' : 'No'}
                   </dd>
                 </div>
@@ -185,42 +185,42 @@ export default function ElectionDetailPage() {
             </Card>
 
             <Card>
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">Schedule & Stats</h3>
+              <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Schedule & Stats</h3>
               <dl className="space-y-3">
-                <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">Start Date</dt>
-                  <dd className="text-sm font-medium text-gray-900">
+                <div className="flex justify-between border-b border-surface-100 pb-3">
+                  <dt className="text-sm text-surface-500">Start Date</dt>
+                  <dd className="text-sm font-medium text-surface-900">
                     {formatDateTime(election.startDate)}
                   </dd>
                 </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">End Date</dt>
-                  <dd className="text-sm font-medium text-gray-900">
+                <div className="flex justify-between border-b border-surface-100 pb-3">
+                  <dt className="text-sm text-surface-500">End Date</dt>
+                  <dd className="text-sm font-medium text-surface-900">
                     {formatDateTime(election.endDate)}
                   </dd>
                 </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">Eligible Voters</dt>
-                  <dd className="text-sm font-medium text-gray-900">
+                <div className="flex justify-between border-b border-surface-100 pb-3">
+                  <dt className="text-sm text-surface-500">Eligible Voters</dt>
+                  <dd className="text-sm font-medium text-surface-900">
                     {election.eligibleVoters.toLocaleString()}
                   </dd>
                 </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">Votes Cast</dt>
-                  <dd className="text-sm font-medium text-gray-900">
+                <div className="flex justify-between border-b border-surface-100 pb-3">
+                  <dt className="text-sm text-surface-500">Votes Cast</dt>
+                  <dd className="text-sm font-medium text-surface-900">
                     {election.votesCast.toLocaleString()}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-sm text-gray-500">Candidates</dt>
-                  <dd className="text-sm font-medium text-gray-900">{election.totalCandidates}</dd>
+                  <dt className="text-sm text-surface-500">Candidates</dt>
+                  <dd className="text-sm font-medium text-surface-900">{election.totalCandidates}</dd>
                 </div>
               </dl>
             </Card>
 
             <Card className="lg:col-span-2">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">Description</h3>
-              <p className="text-sm text-gray-600">{election.description}</p>
+              <h3 className="mb-4 text-[15px] font-semibold text-surface-900">Description</h3>
+              <p className="text-sm leading-relaxed text-surface-600">{election.description}</p>
             </Card>
           </div>
         )}
@@ -228,7 +228,7 @@ export default function ElectionDetailPage() {
         {activeTab === 'candidates' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-surface-500">
                 {electionCandidates.length} candidate(s)
               </p>
               <Button size="sm">
@@ -244,7 +244,7 @@ export default function ElectionDetailPage() {
                 description="Add candidates to this election."
               />
             ) : (
-              <Card className="!p-0">
+              <Card className="!p-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -259,8 +259,8 @@ export default function ElectionDetailPage() {
                     {electionCandidates.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell>
-                          <p className="font-medium text-gray-900">{c.name}</p>
-                          <p className="text-xs text-gray-500">{c.position?.title ?? 'N/A'}</p>
+                          <p className="font-medium text-surface-900">{c.name}</p>
+                          <p className="text-xs text-surface-500">{c.position?.title ?? 'N/A'}</p>
                         </TableCell>
                         <TableCell>{c.party ?? 'Independent'}</TableCell>
                         <TableCell>
@@ -300,7 +300,7 @@ export default function ElectionDetailPage() {
         {activeTab === 'voters' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-surface-500">
                 {voters.length} eligible voter(s)
               </p>
               <Button size="sm">
@@ -316,7 +316,7 @@ export default function ElectionDetailPage() {
                 description="Add eligible voters to this election."
               />
             ) : (
-              <Card className="!p-0">
+              <Card className="!p-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -330,8 +330,8 @@ export default function ElectionDetailPage() {
                   <TableBody>
                     {voters.map((v) => (
                       <TableRow key={v.id}>
-                        <TableCell className="font-medium text-gray-900">{v.fullName}</TableCell>
-                        <TableCell className="text-gray-500">{v.email}</TableCell>
+                        <TableCell className="font-medium text-surface-900">{v.fullName}</TableCell>
+                        <TableCell className="text-surface-500">{v.email}</TableCell>
                         <TableCell>{v.studentId ?? 'N/A'}</TableCell>
                         <TableCell>
                           <Badge variant={v.isVerified ? 'success' : 'warning'}>
@@ -360,8 +360,8 @@ export default function ElectionDetailPage() {
           <Card>
             {election.publishedResults || election.status === 'results_published' ? (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Published Results</h3>
-                <p className="text-sm text-gray-500">
+                <h3 className="text-[15px] font-semibold text-surface-900">Published Results</h3>
+                <p className="text-sm text-surface-500">
                   Results for this election have been published and are available to voters.
                 </p>
                 <Button onClick={() => navigate('/admin/results')}>
@@ -371,8 +371,8 @@ export default function ElectionDetailPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Results Not Published</h3>
-                <p className="text-sm text-gray-500">
+                <h3 className="text-[15px] font-semibold text-surface-900">Results Not Published</h3>
+                <p className="text-sm text-surface-500">
                   {election.status === 'closed'
                     ? 'This election is closed. You can publish the results now.'
                     : 'Results will be available after the election closes.'}

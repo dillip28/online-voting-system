@@ -31,7 +31,7 @@ import { mockResults } from '@/mocks/results';
 import type { Result } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
-const PIE_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+const PIE_COLORS = ['#123B5D', '#167D72', '#D97706', '#DC2626', '#5380AF', '#1DA597'];
 
 export default function ResultsPage() {
   const [selectedElectionId, setSelectedElectionId] = useState('');
@@ -88,8 +88,8 @@ export default function ResultsPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Results Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-[22px] font-semibold text-primary-700">Results Dashboard</h1>
+          <p className="mt-1 text-[14px] text-surface-500">
             View election results and analyze voting patterns.
           </p>
         </div>
@@ -112,7 +112,7 @@ export default function ResultsPage() {
           />
         ) : isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
           </div>
         ) : !result ? (
           <EmptyState
@@ -126,12 +126,12 @@ export default function ResultsPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-primary-100 p-3">
+                    <div className="rounded-lg bg-primary-50 p-3 border border-primary-100">
                       <Users className="h-5 w-5 text-primary-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Total Eligible</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-[13px] text-surface-400">Total Eligible</p>
+                      <p className="text-[22px] font-semibold text-surface-800">
                         {overallStats.totalEligible.toLocaleString()}
                       </p>
                     </div>
@@ -139,12 +139,12 @@ export default function ResultsPage() {
                 </Card>
                 <Card>
                   <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-success-100 p-3">
+                    <div className="rounded-lg bg-success-50 p-3 border border-success-500/20">
                       <Vote className="h-5 w-5 text-success-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Votes Cast</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-[13px] text-surface-400">Votes Cast</p>
+                      <p className="text-[22px] font-semibold text-surface-800">
                         {overallStats.votesCast.toLocaleString()}
                       </p>
                     </div>
@@ -152,23 +152,23 @@ export default function ResultsPage() {
                 </Card>
                 <Card>
                   <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-info-100 p-3">
+                    <div className="rounded-lg bg-info-50 p-3 border border-info-500/20">
                       <BarChart3 className="h-5 w-5 text-info-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Turnout</p>
-                      <p className="text-2xl font-bold text-gray-900">{overallStats.turnout}%</p>
+                      <p className="text-[13px] text-surface-400">Turnout</p>
+                      <p className="text-[22px] font-semibold text-surface-800">{overallStats.turnout}%</p>
                     </div>
                   </div>
                 </Card>
                 <Card>
                   <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-danger-100 p-3">
-                      <Trophy className="h-5 w-5 text-danger-600" />
+                    <div className="rounded-lg bg-danger-50 p-3 border border-danger-500/20">
+                      <Trophy className="h-5 w-5 text-danger-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Invalid Votes</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-[13px] text-surface-400">Invalid Votes</p>
+                      <p className="text-[22px] font-semibold text-surface-800">
                         {overallStats.invalidVotes.toLocaleString()}
                       </p>
                     </div>
@@ -179,28 +179,28 @@ export default function ResultsPage() {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <Card>
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">Candidate Votes</h3>
+                <h3 className="mb-4 text-[16px] font-semibold text-surface-800">Candidate Votes</h3>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#D9E0E7" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#667085' }} />
+                      <YAxis tick={{ fontSize: 12, fill: '#667085' }} />
                       <Tooltip
                         contentStyle={{
                           borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
-                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                          border: '1px solid #D9E0E7',
+                          fontSize: '14px',
                         }}
                       />
-                      <Bar dataKey="votes" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="votes" fill="#123B5D" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </Card>
 
               <Card>
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">Vote Distribution</h3>
+                <h3 className="mb-4 text-[16px] font-semibold text-surface-800">Vote Distribution</h3>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -232,7 +232,7 @@ export default function ResultsPage() {
             </div>
 
             <Card>
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">Candidate Results</h3>
+              <h3 className="mb-4 text-[16px] font-semibold text-surface-800">Candidate Results</h3>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -252,25 +252,25 @@ export default function ResultsPage() {
                         <TableCell>
                           <span
                             className={cn(
-                              'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold',
+                              'flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold',
                               c.rank === 1
-                                ? 'bg-yellow-100 text-yellow-800'
+                                ? 'bg-primary-50 text-primary-700 border border-primary-200'
                                 : c.rank === 2
-                                ? 'bg-gray-100 text-gray-600'
+                                ? 'bg-surface-100 text-surface-600 border border-surface-200'
                                 : c.rank === 3
-                                ? 'bg-orange-100 text-orange-800'
-                                : 'bg-gray-50 text-gray-500'
+                                ? 'bg-warning-50 text-warning-700 border border-warning-500/20'
+                                : 'bg-surface-50 text-surface-500 border border-surface-200'
                             )}
                           >
                             {c.rank}
                           </span>
                         </TableCell>
-                        <TableCell className="font-medium text-gray-900">{c.name}</TableCell>
-                        <TableCell className="text-gray-500">{c.party ?? 'Independent'}</TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="font-medium text-surface-800">{c.name}</TableCell>
+                        <TableCell className="text-surface-500 text-[14px]">{c.party ?? 'Independent'}</TableCell>
+                        <TableCell className="text-right font-medium text-surface-700">
                           {c.votes.toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right">{c.percentage.toFixed(1)}%</TableCell>
+                        <TableCell className="text-right text-[14px] text-surface-600">{c.percentage.toFixed(1)}%</TableCell>
                         <TableCell className="text-center">
                           {c.isWinner && (
                             <Badge variant="success">

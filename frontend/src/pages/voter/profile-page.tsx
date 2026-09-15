@@ -41,15 +41,15 @@ export default function ProfilePage() {
     <DashboardLayout>
       <div className="mx-auto max-w-2xl space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile</h1>
-          <p className="mt-1 text-gray-500 dark:text-gray-400">
+          <h1 className="text-[22px] font-bold text-primary-700">Profile</h1>
+          <p className="mt-1 text-[14px] text-surface-500">
             Manage your account settings
           </p>
         </div>
 
-        <Card>
+        <Card className="border border-surface-200 rounded-lg bg-white">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-xl font-bold text-primary-700 dark:bg-primary-900/50 dark:text-primary-400">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-100 text-lg font-bold text-primary-700">
               {user?.fullName
                 .split(' ')
                 .map((n) => n[0])
@@ -58,19 +58,19 @@ export default function ProfilePage() {
                 .slice(0, 2)}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-[16px] font-semibold text-primary-700">
                 {user?.fullName}
               </h2>
-              <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
-              <Badge variant="info" className="mt-1">
+              <p className="text-[13px] text-surface-500">{user?.email}</p>
+              <Badge variant="info" className="mt-1 text-xs">
                 {user?.role}
               </Badge>
             </div>
           </div>
         </Card>
 
-        <Card>
-          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <Card className="border border-surface-200 rounded-lg bg-white">
+          <h3 className="mb-4 text-[16px] font-semibold text-primary-700">
             Personal Information
           </h3>
           <div className="space-y-4">
@@ -81,6 +81,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setPersonalInfo({ ...personalInfo, fullName: e.target.value })
               }
+              className="border-surface-200 rounded-md text-[14px]"
             />
             <Input
               label="Email"
@@ -90,6 +91,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setPersonalInfo({ ...personalInfo, email: e.target.value })
               }
+              className="border-surface-200 rounded-md text-[14px]"
             />
             <Input
               label="Phone"
@@ -98,25 +100,26 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setPersonalInfo({ ...personalInfo, phone: e.target.value })
               }
+              className="border-surface-200 rounded-md text-[14px]"
             />
             <Input
               label="Student ID"
               icon={CreditCard}
               value={personalInfo.studentId}
               disabled
-              className="bg-gray-50 dark:bg-gray-800"
+              className="bg-surface-50 border-surface-200 rounded-md text-[14px]"
             />
           </div>
           <div className="mt-4 flex justify-end">
-            <Button onClick={handleSavePersonal} isLoading={isSaving}>
+            <Button onClick={handleSavePersonal} isLoading={isSaving} className="bg-primary-600 hover:bg-primary-700 text-white rounded-md">
               <Save className="mr-2 h-4 w-4" />
               Save Changes
             </Button>
           </div>
         </Card>
 
-        <Card>
-          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <Card className="border border-surface-200 rounded-lg bg-white">
+          <h3 className="mb-4 text-[16px] font-semibold text-primary-700">
             Security
           </h3>
           <div className="space-y-4">
@@ -128,6 +131,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setPasswords({ ...passwords, current: e.target.value })
               }
+              className="border-surface-200 rounded-md text-[14px]"
             />
             <Input
               label="New Password"
@@ -137,6 +141,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setPasswords({ ...passwords, newPassword: e.target.value })
               }
+              className="border-surface-200 rounded-md text-[14px]"
             />
             <Input
               label="Confirm New Password"
@@ -146,6 +151,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setPasswords({ ...passwords, confirm: e.target.value })
               }
+              className="border-surface-200 rounded-md text-[14px]"
             />
           </div>
           <div className="mt-4 flex justify-end">
@@ -153,19 +159,20 @@ export default function ProfilePage() {
               variant="outline"
               onClick={handleChangePassword}
               disabled={!passwords.current || !passwords.newPassword || passwords.newPassword !== passwords.confirm}
+              className="border-surface-200 text-primary-600 hover:bg-primary-50 rounded-md"
             >
               Change Password
             </Button>
           </div>
         </Card>
 
-        <Card>
+        <Card className="border border-surface-200 rounded-lg bg-white">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium text-gray-900 dark:text-white">
+              <h3 className="text-[14px] font-semibold text-primary-700">
                 Two-Factor Authentication
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-[13px] text-surface-500">
                 Add an extra layer of security to your account
               </p>
             </div>
@@ -174,7 +181,7 @@ export default function ProfilePage() {
               onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
               className={cn(
                 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                twoFactorEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
+                twoFactorEnabled ? 'bg-primary-600' : 'bg-surface-300'
               )}
             >
               <span

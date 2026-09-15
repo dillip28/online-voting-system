@@ -158,10 +158,10 @@ export default function AdminsPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-[22px] font-semibold text-primary-700">
               Administrator Management
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-[14px] text-surface-500">
               Manage system administrators and their permissions
             </p>
           </div>
@@ -171,10 +171,10 @@ export default function AdminsPage() {
           </Button>
         </div>
 
-        <Card>
-          <div className="flex flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+        <Card className="!p-0">
+          <div className="flex flex-col gap-4 border-b border-surface-100 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
               <Input
                 placeholder="Search admins..."
                 value={search}
@@ -216,25 +216,25 @@ export default function AdminsPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-[14px]">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-800">
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">
+                <tr className="border-b border-surface-100">
+                  <th className="px-4 py-3 text-left font-medium text-surface-500">
                     Name
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">
+                  <th className="px-4 py-3 text-left font-medium text-surface-500">
                     Email
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">
+                  <th className="px-4 py-3 text-left font-medium text-surface-500">
                     Role
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">
+                  <th className="px-4 py-3 text-left font-medium text-surface-500">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">
+                  <th className="px-4 py-3 text-left font-medium text-surface-500">
                     Created
                   </th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">
+                  <th className="px-4 py-3 text-right font-medium text-surface-500">
                     Actions
                   </th>
                 </tr>
@@ -244,7 +244,7 @@ export default function AdminsPage() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-12 text-center text-gray-500 dark:text-gray-400"
+                      className="px-4 py-12 text-center text-surface-500"
                     >
                       No administrators found
                     </td>
@@ -253,11 +253,11 @@ export default function AdminsPage() {
                   paginatedAdmins.map((admin) => (
                     <tr
                       key={admin.id}
-                      className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
+                      className="border-b border-surface-100 transition-colors hover:bg-surface-50"
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-900/50 dark:text-primary-400">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-xs font-semibold text-primary-600 border border-primary-100">
                             {admin.fullName
                               .split(' ')
                               .map((n) => n[0])
@@ -265,12 +265,12 @@ export default function AdminsPage() {
                               .toUpperCase()
                               .slice(0, 2)}
                           </div>
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <span className="font-medium text-surface-800">
                             {admin.fullName}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      <td className="px-4 py-3 text-surface-500">
                         {admin.email}
                       </td>
                       <td className="px-4 py-3">
@@ -294,14 +294,14 @@ export default function AdminsPage() {
                           {admin.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 text-surface-500">
                         {formatDate(admin.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Dropdown
                           trigger={
                             <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreHorizontal className="h-4 w-4 text-surface-500" />
                             </Button>
                           }
                           items={[
@@ -334,8 +334,8 @@ export default function AdminsPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-between border-t border-surface-100 px-4 py-3">
+              <p className="text-[14px] text-surface-500">
                 Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
                 {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of{' '}
                 {filtered.length} admins
@@ -399,7 +399,7 @@ export default function AdminsPage() {
                 }))
               }
             />
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-2 border-t border-surface-100">
               <Button
                 type="button"
                 variant="outline"
@@ -420,18 +420,18 @@ export default function AdminsPage() {
         >
           <form onSubmit={handleEditAdmin} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-[14px] font-medium text-surface-700">
                 Name
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">
+              <p className="text-[14px] text-surface-800">
                 {selectedAdmin?.fullName}
               </p>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-[14px] font-medium text-surface-700">
                 Email
               </label>
-              <p className="text-sm text-gray-900 dark:text-white">
+              <p className="text-[14px] text-surface-800">
                 {selectedAdmin?.email}
               </p>
             </div>
@@ -446,7 +446,7 @@ export default function AdminsPage() {
                 setEditRole(e.target.value as 'admin' | 'super_admin')
               }
             />
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-2 border-t border-surface-100">
               <Button
                 type="button"
                 variant="outline"

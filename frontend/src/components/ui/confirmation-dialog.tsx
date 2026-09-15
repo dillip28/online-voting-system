@@ -25,8 +25,8 @@ function ConfirmationDialog({
 }: ConfirmationDialogProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size={size}>
-      <p className="text-sm text-gray-600">{message}</p>
-      <div className="mt-6 flex justify-end gap-3">
+      <p className="text-sm text-surface-600">{message}</p>
+      <div className="mt-5 flex justify-end gap-3">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
