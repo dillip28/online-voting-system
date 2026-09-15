@@ -35,6 +35,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [studentId, setStudentId] = useState('');
+  const [department, setDepartment] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
@@ -46,6 +47,8 @@ export default function RegisterPage() {
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!studentId.trim()) newErrors.studentId = 'Student ID is required';
+    if (!department.trim()) newErrors.department = 'Department is required';
     if (!email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -72,13 +75,17 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register({
+      const success = await register({
         fullName,
         email,
         password,
-        phone: phone || undefined,
-        studentId: studentId || undefined,
+        phone,
+        studentId,
+        department,
       });
+      if (!success) {
+        throw new Error('Registration failed. Please check your details and try again.');
+      }
       toast('success', 'Your account has been created. Please sign in.');
       navigate('/login');
     } catch (err: any) {
@@ -138,13 +145,24 @@ export default function RegisterPage() {
             />
             <Input
               id="studentId"
-              label="ID Number (optional)"
+              label="ID Number"
               placeholder="STU-001"
               icon={IdCard}
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
+              error={errors.studentId}
             />
           </div>
+
+          <Input
+            id="department"
+            label="Department"
+            placeholder="e.g., Computer Science"
+            icon={User}
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+            error={errors.department}
+          />
 
           <div className="space-y-2">
             <Input

@@ -68,7 +68,7 @@ export default function ElectionDetailPage() {
         setCandidates(Array.isArray(candRes.data) ? candRes.data : []);
         try {
           const voterRes = await electionsApi.getElectionVoters(id!);
-          setVoters(voterRes.data?.data || []);
+          setVoters(voterRes.data?.items || []);
         } catch { setVoters([]); }
       } catch {
         setElection(null);
@@ -109,21 +109,14 @@ export default function ElectionDetailPage() {
 
   const handleStatusChange = async (next: ElectionStatus) => {
     try {
-      if (next === 'scheduled' || next === 'active') {
-        await fetch(`/api/elections/${id}/${next === 'active' ? 'open' : 'schedule'}`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
-        });
+      if (next === 'scheduled') {
+        await electionsApi.scheduleElection(id!);
+      } else if (next === 'active') {
+        await electionsApi.openElection(id!);
       } else if (next === 'closed') {
-        await fetch(`/api/elections/${id}/close`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
-        });
+        await electionsApi.closeElection(id!);
       } else if (next === 'results_published') {
-        await fetch(`/api/elections/${id}/publish-results`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
-        });
+        await electionsApi.publishResults(id!);
       }
       const res = await electionsApi.getElection(id!);
       setElection(res.data || null);

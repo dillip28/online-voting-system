@@ -12,13 +12,21 @@ interface ElectionFilters {
 
 interface CreateElectionData {
   title: string;
-  description: string;
+  description?: string;
   type: string;
-  organization: string;
-  startDate: string;
-  endDate: string;
-  enableNota?: boolean;
-  maxSelections?: number;
+  startTime: string;
+  endTime: string;
+  settings?: {
+    allowNOTA?: boolean;
+    resultVisibility?: string;
+    requireStudentId?: boolean;
+  };
+  positions: {
+    title: string;
+    description?: string;
+    displayOrder: number;
+    maxSelections?: number;
+  }[];
 }
 
 interface UpdateElectionData extends Partial<CreateElectionData> {
@@ -65,5 +73,21 @@ export const electionsApi = {
 
   async getElectionVoters(electionId: string, filters?: { page?: number; limit?: number }): Promise<ApiResponse<PaginatedResponse<Voter>>> {
     return apiClient.get(`/elections/${electionId}/voters`, { params: filters as Record<string, string | number | boolean | undefined> });
+  },
+
+  async scheduleElection(id: string): Promise<ApiResponse<Election>> {
+    return apiClient.post(`/elections/${id}/schedule`);
+  },
+
+  async openElection(id: string): Promise<ApiResponse<Election>> {
+    return apiClient.post(`/elections/${id}/open`);
+  },
+
+  async closeElection(id: string): Promise<ApiResponse<Election>> {
+    return apiClient.post(`/elections/${id}/close`);
+  },
+
+  async publishResults(id: string): Promise<ApiResponse<Election>> {
+    return apiClient.post(`/elections/${id}/publish-results`);
   },
 };

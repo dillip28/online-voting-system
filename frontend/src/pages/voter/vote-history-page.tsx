@@ -1,46 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { History, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Card, Badge, EmptyState, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
-import type { VoteStatus, ElectionType } from '@/types';
+import { votesApi } from '@/api/votes';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
 interface VoteHistoryItem {
   id: string;
   electionId: string;
   electionTitle: string;
-  electionType: ElectionType;
   confirmationId: string;
-  status: VoteStatus;
-  submittedAt: string;
-  positions: { name: string; candidate: string }[];
+  status: string;
+  votedAt: string;
 }
 
-const mockVoteHistory: VoteHistoryItem[] = [
-  {
-    id: 'vh_001',
-    electionId: 'elec_002',
-    electionTitle: 'Department Head Election',
-    electionType: 'organizational',
-    confirmationId: 'VOTE-DH-7890',
-    status: 'submitted',
-    submittedAt: '2026-09-15T14:30:00Z',
-    positions: [{ name: 'Department Head', candidate: 'Dr. Robert Chang' }],
-  },
-  {
-    id: 'vh_002',
-    electionId: 'elec_005',
-    electionTitle: 'Best Student Award 2025',
-    electionType: 'student',
-    confirmationId: 'VOTE-BS-4521',
-    status: 'submitted',
-    submittedAt: '2025-12-05T09:15:00Z',
-    positions: [{ name: 'Best Student', candidate: 'Laura Bennett' }],
-  },
-];
-
-const statusVariant: Record<VoteStatus, 'default' | 'success' | 'warning' | 'danger'> = {
+const statusVariant: Record<string, 'default' | 'success' | 'warning' | 'danger'> = {
   pending: 'warning',
   submitted: 'success',
   verified: 'success',
@@ -49,6 +24,31 @@ const statusVariant: Record<VoteStatus, 'default' | 'success' | 'warning' | 'dan
 
 export default function VoteHistoryPage() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [votes, setVotes] = useState<VoteHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await votesApi.getVotingHistory();
+        if (res.data?.items) {
+          setVotes(res.data.items.map((v: any, i: number) => ({
+            id: `vh_${i}`,
+            electionId: v.electionId,
+            electionTitle: v.electionTitle,
+            confirmationId: `CONFIRM-${v.electionId?.slice(0, 8)?.toUpperCase() || 'N/A'}`,
+            status: v.status || 'submitted',
+            votedAt: v.votedAt,
+          })));
+        }
+      } catch {
+        setVotes([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   return (
     <DashboardLayout>
@@ -60,7 +60,11 @@ export default function VoteHistoryPage() {
           </p>
         </div>
 
-        {mockVoteHistory.length === 0 ? (
+        {isLoading ? (
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+          </div>
+        ) : votes.length === 0 ? (
           <EmptyState
             icon={History}
             title="No votes yet"
@@ -83,10 +87,9 @@ export default function VoteHistoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockVoteHistory.map((item) => (
-                  <>
+                {votes.map((item) => (
+                  <TableRow key={item.id}>
                     <TableRow
-                      key={item.id}
                       className="cursor-pointer"
                       onClick={() =>
                         setExpandedRow(expandedRow === item.id ? null : item.id)
@@ -97,16 +100,13 @@ export default function VoteHistoryPage() {
                           <p className="text-[14px] font-medium text-primary-700">
                             {item.electionTitle}
                           </p>
-                          <Badge variant="outline" className="mt-1 text-xs">
-                            {item.electionType}
-                          </Badge>
                         </div>
                       </TableCell>
                       <TableCell className="text-[13px] text-surface-600">
-                        {formatDate(item.submittedAt)}
+                        {formatDate(item.votedAt)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant[item.status]}>
+                        <Badge variant={statusVariant[item.status] || 'success'}>
                           {item.status}
                         </Badge>
                       </TableCell>
@@ -128,16 +128,8 @@ export default function VoteHistoryPage() {
                         <TableCell colSpan={5} className="bg-surface-50">
                           <div className="space-y-2 py-2">
                             <p className="text-[13px] font-semibold text-primary-700">
-                              Votes cast:
+                              Vote recorded
                             </p>
-                            {item.positions.map((pos, i) => (
-                              <div key={i} className="flex items-center gap-2 text-[13px] text-surface-600">
-                                <span>{pos.name}:</span>
-                                <span className="font-medium text-primary-700">
-                                  {pos.candidate}
-                                </span>
-                              </div>
-                            ))}
                             <Link
                               to={`/elections/${item.electionId}`}
                               className="inline-flex items-center gap-1 text-[13px] font-medium text-accent-600 hover:text-accent-700"
@@ -149,7 +141,7 @@ export default function VoteHistoryPage() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>

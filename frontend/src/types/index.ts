@@ -44,6 +44,7 @@ export interface Election {
   publishedResults: boolean;
   createdAt: string;
   updatedAt: string;
+  positions?: Position[];
 }
 
 export interface Position {
@@ -199,7 +200,7 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  items: T[];
   total: number;
   page: number;
   limit: number;

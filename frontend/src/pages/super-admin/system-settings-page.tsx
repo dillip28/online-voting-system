@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
+import { adminApi } from '@/api/admin';
 
 interface GeneralSettings {
   systemName: string;
@@ -71,9 +72,39 @@ export default function SystemSettingsPage() {
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    toast('success', 'Settings saved successfully');
+    try {
+      await adminApi.updateSystemSettings({
+        electionDefaults: {
+          maxPositions: 10,
+          enableNota: true,
+          defaultDuration: 8,
+          allowSelfNomination: false,
+        },
+        authentication: {
+          requireEmailVerification: true,
+          requirePhoneVerification: false,
+          twoFactorRequired: security.require2FA,
+          passwordMinLength: security.passwordMinLength,
+        },
+        notifications: {
+          emailNotifications: true,
+          smsNotifications: false,
+          electionReminders: true,
+          resultNotifications: true,
+        },
+        security: {
+          sessionTimeout: security.sessionTimeout,
+          maxLoginAttempts: security.maxLoginAttempts,
+          lockoutDuration: security.lockoutDuration,
+          ipWhitelist: [],
+        },
+      });
+      toast('success', 'Settings saved successfully');
+    } catch {
+      toast('error', 'Failed to save settings. The backend may not be running.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tabs = [

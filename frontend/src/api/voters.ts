@@ -21,8 +21,7 @@ interface Voter {
 }
 
 interface UpdateVoterStatusData {
-  isEligible?: boolean;
-  hasVoted?: boolean;
+  isVerified: boolean;
 }
 
 interface ImportVotersData {

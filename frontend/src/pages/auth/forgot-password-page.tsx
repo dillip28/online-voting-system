@@ -4,6 +4,7 @@ import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { authApi } from '@/api/auth';
 import { useToast } from '@/components/ui/toast';
 import type { FormEvent } from 'react';
 
@@ -33,10 +34,10 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await authApi.forgotPassword(email);
       setSubmitted(true);
     } catch (err: any) {
-      toast('error', err?.message || 'Failed to send reset link. Please try again.');
+      setSubmitted(true);
     } finally {
       setLoading(false);
     }

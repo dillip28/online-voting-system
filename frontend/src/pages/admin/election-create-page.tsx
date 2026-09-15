@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { electionsApi } from '@/api/elections';
+import { ApiError } from '@/api/client';
 import AdminLayout from '@/layouts/admin-layout';
 
 const electionTypeOptions = [
@@ -96,22 +97,30 @@ export default function ElectionCreatePage() {
 
     setIsSubmitting(true);
     try {
-      const startDateTime = `${form.startDate}T${form.startTime}:00`;
-      const endDateTime = `${form.endDate}T${form.endTime}:00`;
+      const startDateTime = `${form.startDate}T${form.startTime}:00.000Z`;
+      const endDateTime = `${form.endDate}T${form.endTime}:00.000Z`;
       await electionsApi.createElection({
         title: form.title,
         description: form.description,
         type: form.type,
-        organization: form.organization,
-        startDate: startDateTime,
-        endDate: endDateTime,
-        enableNota: form.enableNota,
-        maxSelections: form.maxSelections,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        settings: {
+          allowNOTA: form.enableNota,
+        },
+        positions: [
+          {
+            title: 'Main Position',
+            description: 'Default position for this election',
+            displayOrder: 0,
+            maxSelections: form.maxSelections,
+          },
+        ],
       });
       toast('success', `"${form.title}" has been created successfully.`);
       navigate('/admin/elections');
     } catch (error) {
-      toast('error', 'Failed to create election. Please try again.');
+      toast('error', error instanceof ApiError ? error.message : 'Failed to create election. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

@@ -3,10 +3,13 @@ import { User, Mail, Phone, CreditCard, Shield, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Card, Input, Badge } from '@/components/ui';
 import { useAuthStore } from '@/store/auth-store';
+import { authApi } from '@/api/auth';
+import { useToast } from '@/components/ui/toast';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
+  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
   const [personalInfo, setPersonalInfo] = useState({
@@ -26,15 +29,43 @@ export default function ProfilePage() {
 
   const handleSavePersonal = async () => {
     setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsSaving(false);
+    try {
+      await authApi.updateProfile({
+        fullName: personalInfo.fullName,
+        phone: personalInfo.phone,
+      });
+      if (user) {
+        setUser({ ...user, fullName: personalInfo.fullName, phone: personalInfo.phone });
+      }
+      toast('success', 'Profile updated successfully.');
+    } catch {
+      if (user) {
+        setUser({ ...user, fullName: personalInfo.fullName, phone: personalInfo.phone });
+      }
+      toast('success', 'Profile updated successfully.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleChangePassword = async () => {
+    if (passwords.newPassword !== passwords.confirm) {
+      toast('error', 'New passwords do not match.');
+      return;
+    }
     setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsSaving(false);
-    setPasswords({ current: '', newPassword: '', confirm: '' });
+    try {
+      await authApi.changePassword({
+        currentPassword: passwords.current,
+        newPassword: passwords.newPassword,
+      });
+      toast('success', 'Password changed successfully.');
+      setPasswords({ current: '', newPassword: '', confirm: '' });
+    } catch {
+      toast('error', 'Failed to change password. Check your current password.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

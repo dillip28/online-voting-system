@@ -1,12 +1,12 @@
 import { apiClient } from './client';
-import type { ApiResponse, User } from '@/types';
+import type { ApiResponse, User, UserRole } from '@/types';
 
 interface LoginResponse {
   token: string;
   user: {
     id: string;
     email: string;
-    role: string;
+    role: UserRole;
     profile: {
       fullName: string;
       studentId: string;

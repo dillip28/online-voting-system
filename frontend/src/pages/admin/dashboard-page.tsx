@@ -304,7 +304,7 @@ export default function DashboardPage() {
                       {new Date(log.createdAt).toLocaleString()}
                     </p>
                   </div>
-                  <StatusBadge status="draft" className="shrink-0" />
+                  <StatusBadge status={log.action === 'VOTE_CAST' ? 'active' : log.action === 'ELECTION_CREATED' ? 'draft' : log.action === 'ELECTION_OPENED' ? 'active' : log.action === 'ELECTION_CLOSED' ? 'closed' : log.action === 'RESULTS_PUBLISHED' ? 'results_published' : 'draft'} className="shrink-0" />
                 </div>
               ))
             )}

@@ -118,14 +118,8 @@ export const useElectionStore = create<ElectionStore>()((set) => ({
   openElection: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/api/elections/${id}/open`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.ok) {
+      const response = await electionsApi.openElection(id);
+      if (response.success) {
         set({ isLoading: false });
         return true;
       }
@@ -140,14 +134,8 @@ export const useElectionStore = create<ElectionStore>()((set) => ({
   closeElection: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/api/elections/${id}/close`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.ok) {
+      const response = await electionsApi.closeElection(id);
+      if (response.success) {
         set({ isLoading: false });
         return true;
       }

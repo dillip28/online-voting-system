@@ -44,7 +44,8 @@ export default function LoginPage() {
       if (!success) throw new Error('Invalid email or password.');
       toast('success', 'You have successfully signed in.');
 
-      if (user?.role === 'super_admin' || user?.role === 'admin') {
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.role === 'super_admin' || currentUser?.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/dashboard');

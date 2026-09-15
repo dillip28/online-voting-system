@@ -58,19 +58,20 @@ export default function ElectionEditPage() {
         const res = await electionsApi.getElection(id!);
         const election = res.data;
         if (election) {
-          const startDate = new Date(election.startDate);
-          const endDate = new Date(election.endDate);
+          const start = new Date((election as any).startTime || election.startDate);
+          const end = new Date((election as any).endTime || election.endDate);
+          const settings = (election as any).settings || {};
           setForm({
             title: election.title,
-            description: election.description,
+            description: election.description || '',
             type: election.type,
-            organization: election.organization,
-            startDate: startDate.toISOString().split('T')[0],
-            startTime: startDate.toTimeString().slice(0, 5),
-            endDate: endDate.toISOString().split('T')[0],
-            endTime: endDate.toTimeString().slice(0, 5),
-            enableNota: election.enableNota,
-            maxSelections: election.maxSelections,
+            organization: election.organization || '',
+            startDate: start.toISOString().split('T')[0],
+            startTime: start.toTimeString().slice(0, 5),
+            endDate: end.toISOString().split('T')[0],
+            endTime: end.toTimeString().slice(0, 5),
+            enableNota: settings.allowNOTA ?? election.enableNota ?? true,
+            maxSelections: election.maxSelections ?? 1,
           });
         }
       } catch {
@@ -119,17 +120,14 @@ export default function ElectionEditPage() {
 
     setIsSubmitting(true);
     try {
-      const startDateTime = `${form!.startDate}T${form!.startTime}:00`;
-      const endDateTime = `${form!.endDate}T${form!.endTime}:00`;
+      const startDateTime = `${form!.startDate}T${form!.startTime}:00.000Z`;
+      const endDateTime = `${form!.endDate}T${form!.endTime}:00.000Z`;
       await electionsApi.updateElection(id!, {
         title: form!.title,
         description: form!.description,
         type: form!.type,
-        organization: form!.organization,
-        startDate: startDateTime,
-        endDate: endDateTime,
-        enableNota: form!.enableNota,
-        maxSelections: form!.maxSelections,
+        startTime: startDateTime,
+        endTime: endDateTime,
       });
       toast('success', `"${form!.title}" has been updated successfully.`);
       navigate('/admin/elections');

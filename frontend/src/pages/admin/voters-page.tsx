@@ -54,7 +54,7 @@ export default function VotersPage() {
     const fetchVoters = async () => {
       try {
         const res = await votersApi.getVoters({ limit: 100 });
-        setVoters(res.data?.data || []);
+        setVoters(res.data?.items || []);
       } catch { setVoters([]); }
       finally { setIsLoading(false); }
     };
@@ -87,9 +87,9 @@ export default function VotersPage() {
     const voter = voters.find((v) => v.id === id);
     if (!voter) return;
     try {
-      await votersApi.updateVoterStatus(id, { isEligible: !voter.isActive });
+      await votersApi.updateVoterStatus(id, { isVerified: !voter.isVerified });
       setVoters((prev) =>
-        prev.map((v) => (v.id === id ? { ...v, isActive: !v.isActive } : v))
+        prev.map((v) => (v.id === id ? { ...v, isVerified: !v.isVerified } : v))
       );
       toast('success', 'Voter account status has been toggled.');
     } catch {

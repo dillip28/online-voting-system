@@ -48,7 +48,7 @@ export default function ElectionsListPage() {
     const fetchElections = async () => {
       try {
         const res = await electionsApi.getElections({ limit: 100 });
-        setElections(res.data?.data || []);
+        setElections(res.data?.items || []);
       } catch {
         setElections([]);
       } finally {
@@ -62,7 +62,7 @@ export default function ElectionsListPage() {
     return elections.filter((e) => {
       const matchesSearch =
         e.title.toLowerCase().includes(search.toLowerCase()) ||
-        e.organization.toLowerCase().includes(search.toLowerCase());
+        (e.organization?.toLowerCase().includes(search.toLowerCase()) ?? false);
       const matchesStatus = !statusFilter || e.status === statusFilter;
       return matchesSearch && matchesStatus;
     });

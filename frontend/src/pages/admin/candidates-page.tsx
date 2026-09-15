@@ -67,6 +67,7 @@ export default function CandidatesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [electionList, setElectionList] = useState<any[]>([]);
+  const [positionList, setPositionList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editCandidate, setEditCandidate] = useState<Candidate | null>(null);
@@ -80,8 +81,8 @@ export default function CandidatesPage() {
           candidatesApi.getCandidates(),
           electionsApi.getElections({ limit: 100 }),
         ]);
-        setCandidates(candRes.data?.data || []);
-        setElectionList(elecRes.data?.data || []);
+        setCandidates(candRes.data?.items || candRes.data || []);
+        setElectionList(elecRes.data?.items || []);
       } catch { /* ignore */ }
       finally { setIsLoading(false); }
     };
@@ -116,6 +117,17 @@ export default function CandidatesPage() {
     setShowModal(true);
   };
 
+  useEffect(() => {
+    if (!form.electionId) {
+      setPositionList([]);
+      return;
+    }
+
+    electionsApi.getElection(form.electionId)
+      .then((response) => setPositionList(response.data?.positions || []))
+      .catch(() => setPositionList([]));
+  }, [form.electionId]);
+
   const openEditModal = (candidate: Candidate) => {
     setEditCandidate(candidate);
     setForm({
@@ -130,8 +142,8 @@ export default function CandidatesPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.electionId) {
-      toast('error', 'Name and election are required.');
+    if (!form.name.trim() || !form.electionId || !form.positionId) {
+      toast('error', 'Name, election, and position are required.');
       return;
     }
 
@@ -150,7 +162,7 @@ export default function CandidatesPage() {
         await candidatesApi.createCandidate({
           name: form.name,
           electionId: form.electionId,
-          positionId: form.positionId || 'pos_default',
+          positionId: form.positionId,
           party: form.party || undefined,
           biography: form.biography,
           manifesto: form.manifesto,
@@ -159,7 +171,7 @@ export default function CandidatesPage() {
       }
 
       const candRes = await candidatesApi.getCandidates();
-      setCandidates(candRes.data?.data || []);
+      setCandidates(Array.isArray(candRes.data) ? candRes.data : []);
     } catch {
       toast('error', 'Something went wrong. Please try again.');
     }
@@ -365,7 +377,18 @@ export default function CandidatesPage() {
             options={electionList.map((e) => ({ value: e.id, label: e.title }))}
             placeholder="Select election"
             value={form.electionId}
-            onChange={(e) => updateField('electionId', e.target.value)}
+            onChange={(e) => {
+              updateField('electionId', e.target.value);
+              updateField('positionId', '');
+            }}
+          />
+          <Select
+            label="Position"
+            options={positionList.map((position) => ({ value: position.id, label: position.title }))}
+            placeholder={form.electionId ? 'Select position' : 'Select an election first'}
+            value={form.positionId}
+            onChange={(e) => updateField('positionId', e.target.value)}
+            disabled={!form.electionId || positionList.length === 0}
           />
           <Input
             label="Party"
