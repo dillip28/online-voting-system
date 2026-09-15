@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Shield,
@@ -18,38 +18,47 @@ import { cn, formatDateTime } from '@/lib/utils';
 import AdminLayout from '@/layouts/admin-layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockUsers } from '@/mocks/users';
-import { mockElections } from '@/mocks/elections';
-import { mockAuditLogs } from '@/mocks/audit-logs';
+import { apiClient } from '@/api/client';
 
 export default function SuperAdminDashboardPage() {
-  const stats = useMemo(() => {
-    const admins = mockUsers.filter(
-      (u) => u.role === 'admin' || u.role === 'super_admin'
-    );
-    const activeElections = mockElections.filter((e) => e.status === 'active');
-    const totalVotes = mockElections.reduce((sum, e) => sum + e.votesCast, 0);
-    const totalVoters = mockUsers.filter((u) => u.role === 'voter').length;
+  const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<any>(null);
 
-    return {
-      totalAdmins: admins.length,
-      totalElections: mockElections.length,
-      activeElections: activeElections.length,
-      totalVoters,
-      totalVotes,
-      systemHealth: 'Operational' as const,
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await apiClient.get<{ success: boolean; data: any }>('/admin/dashboard');
+        setDashboardData(res.data || null);
+      } catch { setDashboardData(null); }
+      finally { setIsLoading(false); }
     };
+    fetchDashboard();
   }, []);
 
+  const stats = useMemo(() => {
+    if (!dashboardData) {
+      return {
+        totalAdmins: 0,
+        totalElections: 0,
+        activeElections: 0,
+        totalVoters: 0,
+        totalVotes: 0,
+        systemHealth: 'Unknown' as const,
+      };
+    }
+    return {
+      totalAdmins: dashboardData.totalAdmins ?? 0,
+      totalElections: dashboardData.totalElections ?? 0,
+      activeElections: dashboardData.activeElections ?? 0,
+      totalVoters: dashboardData.totalVoters ?? 0,
+      totalVotes: dashboardData.totalVotes ?? 0,
+      systemHealth: (dashboardData.systemHealth ?? 'Unknown') as 'Operational' | 'Degraded' | 'Down' | 'Unknown',
+    };
+  }, [dashboardData]);
+
   const recentActivity = useMemo(
-    () =>
-      [...mockAuditLogs]
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-        .slice(0, 8),
-    []
+    () => dashboardData?.recentActivity ?? [],
+    [dashboardData]
   );
 
   const statCards = [
@@ -137,6 +146,12 @@ export default function SuperAdminDashboardPage() {
   return (
     <AdminLayout>
       <div className="space-y-8">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-sm text-gray-500">Loading dashboard...</p>
+          </div>
+        ) : (
+        <>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             System Overview
@@ -187,7 +202,7 @@ export default function SuperAdminDashboardPage() {
                 </Link>
               </div>
               <div className="space-y-4">
-                {recentActivity.map((log) => {
+                {recentActivity.map((log: any) => {
                   const Icon = getActionIcon(log.action);
                   return (
                     <div
@@ -298,6 +313,8 @@ export default function SuperAdminDashboardPage() {
             </Card>
           </div>
         </div>
+        </>
+        )}
       </div>
     </AdminLayout>
   );

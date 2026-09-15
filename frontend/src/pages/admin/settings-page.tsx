@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
+import { apiClient } from '@/api/client';
 import type { SystemSettings } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -43,10 +44,24 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('election');
   const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [ipWhitelistText, setIpWhitelistText] = useState(
     defaultSettings.security.ipWhitelist.join('\n')
   );
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await apiClient.get<{ success: boolean; data: any }>('/admin/settings');
+        if (res.data) {
+          setSettings(prev => ({ ...prev, ...res.data }));
+        }
+      } catch { /* use defaults */ }
+      finally { setIsLoading(false); }
+    };
+    fetchSettings();
+  }, []);
 
   const tabs = [
     { id: 'election', label: 'Election Defaults' },
@@ -57,10 +72,14 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      await apiClient.put('/admin/settings', settings);
+      toast('success', 'Settings saved successfully.');
+    } catch {
+      toast('error', 'Failed to save settings.');
+    }
     setIsSaving(false);
     setShowConfirm(false);
-    toast('success', 'System settings have been updated successfully.');
   };
 
   const updateElection = <K extends keyof SystemSettings['electionDefaults']>(

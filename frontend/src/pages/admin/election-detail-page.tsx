@@ -30,10 +30,9 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
-import { mockElections } from '@/mocks/elections';
-import { mockCandidates } from '@/mocks/candidates';
-import { mockUsers } from '@/mocks/users';
-import type { Election, ElectionStatus } from '@/types';
+import { electionsApi } from '@/api/elections';
+import { candidatesApi } from '@/api/candidates';
+import type { ElectionStatus } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
 const statusTransitions: Partial<Record<ElectionStatus, { next: ElectionStatus; label: string }[]>> = {
@@ -49,9 +48,10 @@ export default function ElectionDetailPage() {
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [election, setElection] = useState<Election | null>(null);
-  const [candidates, setCandidates] = useState(mockCandidates);
-  const [voters, setVoters] = useState(mockUsers.filter((u) => u.role === 'voter'));
+  const [election, setElection] = useState<any>(null);
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [voters, setVoters] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; next: ElectionStatus | null }>({
     open: false,
     next: null,
@@ -60,9 +60,34 @@ export default function ElectionDetailPage() {
   const [removeVoterId, setRemoveVoterId] = useState<string | null>(null);
 
   useEffect(() => {
-    const found = mockElections.find((e) => e.id === id) ?? null;
-    setElection(found);
+    const fetchElection = async () => {
+      try {
+        const res = await electionsApi.getElection(id!);
+        setElection(res.data || null);
+        const candRes = await electionsApi.getElectionCandidates(id!);
+        setCandidates(Array.isArray(candRes.data) ? candRes.data : []);
+        try {
+          const voterRes = await electionsApi.getElectionVoters(id!);
+          setVoters(voterRes.data?.data || []);
+        } catch { setVoters([]); }
+      } catch {
+        setElection(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchElection();
   }, [id]);
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-surface-200 border-t-primary-600" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (!election) {
     return (
@@ -80,19 +105,44 @@ export default function ElectionDetailPage() {
     );
   }
 
-  const electionCandidates = candidates.filter((c) => c.electionId === election.id);
-  const transitions = statusTransitions[election.status] ?? [];
+  const transitions = statusTransitions[election.status as ElectionStatus] ?? [];
 
-  const handleStatusChange = (next: ElectionStatus) => {
-    setElection((prev) => (prev ? { ...prev, status: next } : null));
+  const handleStatusChange = async (next: ElectionStatus) => {
+    try {
+      if (next === 'scheduled' || next === 'active') {
+        await fetch(`/api/elections/${id}/${next === 'active' ? 'open' : 'schedule'}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+        });
+      } else if (next === 'closed') {
+        await fetch(`/api/elections/${id}/close`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+        });
+      } else if (next === 'results_published') {
+        await fetch(`/api/elections/${id}/publish-results`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+        });
+      }
+      const res = await electionsApi.getElection(id!);
+      setElection(res.data || null);
+      toast('success', `Election status changed to ${next.replace('_', ' ')}.`);
+    } catch {
+      toast('error', 'Failed to change election status.');
+    }
     setStatusDialog({ open: false, next: null });
-    toast('success', `Election status changed to ${next.replace('_', ' ')}.`);
   };
 
-  const handleDeleteCandidate = (candidateId: string) => {
-    setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
+  const handleDeleteCandidate = async (candidateId: string) => {
+    try {
+      await candidatesApi.deleteCandidate(candidateId);
+      setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
+      toast('success', 'Candidate has been removed from the election.');
+    } catch {
+      toast('error', 'Failed to remove candidate.');
+    }
     setDeleteCandidateId(null);
-    toast('success', 'Candidate has been removed from the election.');
   };
 
   const handleRemoveVoter = (voterId: string) => {
@@ -129,7 +179,7 @@ export default function ElectionDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {transitions.map((t) => (
+            {transitions.map((t: any) => (
               <Button
                 key={t.next}
                 variant={t.next === 'active' ? 'success' : 'primary'}
@@ -169,7 +219,7 @@ export default function ElectionDetailPage() {
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">Positions</dt>
-                  <dd className="text-sm font-medium text-surface-900">{election.totalPositions}</dd>
+                  <dd className="text-sm font-medium text-surface-900">{election.positionsCount ?? election.positions?.length ?? 0}</dd>
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">Max Selections</dt>
@@ -190,13 +240,13 @@ export default function ElectionDetailPage() {
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">Start Date</dt>
                   <dd className="text-sm font-medium text-surface-900">
-                    {formatDateTime(election.startDate)}
+                    {formatDateTime(election.startTime ?? election.startDate)}
                   </dd>
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">End Date</dt>
                   <dd className="text-sm font-medium text-surface-900">
-                    {formatDateTime(election.endDate)}
+                    {formatDateTime(election.endTime ?? election.endDate)}
                   </dd>
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
@@ -229,7 +279,7 @@ export default function ElectionDetailPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-surface-500">
-                {electionCandidates.length} candidate(s)
+                {candidates.length} candidate(s)
               </p>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
@@ -237,7 +287,7 @@ export default function ElectionDetailPage() {
               </Button>
             </div>
 
-            {electionCandidates.length === 0 ? (
+            {candidates.length === 0 ? (
               <EmptyState
                 icon={Users}
                 title="No candidates yet"
@@ -256,7 +306,7 @@ export default function ElectionDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {electionCandidates.map((c) => (
+                    {candidates.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell>
                           <p className="font-medium text-surface-900">{c.name}</p>

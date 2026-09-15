@@ -1,4 +1,4 @@
-import { useState, useMemo, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import {
   Search,
   Plus,
@@ -9,7 +9,7 @@ import {
   Trash2,
   Edit,
 } from 'lucide-react';
-import { formatDate, generateId } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import AdminLayout from '@/layouts/admin-layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,16 +21,15 @@ import { Dropdown } from '@/components/ui/dropdown';
 import { Pagination } from '@/components/ui/pagination';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { mockUsers } from '@/mocks/users';
+import { apiClient } from '@/api/client';
 import type { User } from '@/types';
 
 const ITEMS_PER_PAGE = 8;
 
 export default function AdminsPage() {
   const { toast } = useToast();
-  const [admins, setAdmins] = useState<User[]>(
-    mockUsers.filter((u) => u.role === 'admin' || u.role === 'super_admin')
-  );
+  const [admins, setAdmins] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -48,6 +47,17 @@ export default function AdminsPage() {
   });
   const [editRole, setEditRole] = useState<'admin' | 'super_admin'>('admin');
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const res = await apiClient.get<{ success: boolean; data: any[] }>('/admin/admins');
+        setAdmins(res.data || []);
+      } catch { setAdmins([]); }
+      finally { setIsLoading(false); }
+    };
+    fetchAdmins();
+  }, []);
 
   const filtered = useMemo(() => {
     return admins.filter((admin) => {
@@ -82,64 +92,79 @@ export default function AdminsPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAddAdmin = (e: FormEvent) => {
+  const handleAddAdmin = async (e: FormEvent) => {
     e.preventDefault();
     if (!validateAdd()) return;
 
-    const created: User = {
-      id: `usr-${generateId()}`,
-      email: newAdmin.email,
-      fullName: newAdmin.fullName,
-      role: newAdmin.role,
-      isVerified: true,
-      isActive: true,
-      twoFactorEnabled: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setAdmins((prev) => [...prev, created]);
-    setAddModalOpen(false);
-    setNewAdmin({ fullName: '', email: '', password: '', role: 'admin' });
-    toast('success', 'Admin created successfully');
+    try {
+      const res = await apiClient.post<{ success: boolean; data: User }>('/admin/admins', {
+        fullName: newAdmin.fullName,
+        email: newAdmin.email,
+        password: newAdmin.password,
+        role: newAdmin.role,
+      });
+      if (res.data) {
+        setAdmins((prev) => [...prev, res.data]);
+      }
+      setAddModalOpen(false);
+      setNewAdmin({ fullName: '', email: '', password: '', role: 'admin' });
+      toast('success', 'Admin created successfully');
+    } catch {
+      toast('error', 'Failed to create admin');
+    }
   };
 
-  const handleEditAdmin = (e: FormEvent) => {
+  const handleEditAdmin = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedAdmin) return;
 
-    setAdmins((prev) =>
-      prev.map((a) =>
-        a.id === selectedAdmin.id
-          ? { ...a, role: editRole, updatedAt: new Date().toISOString() }
-          : a
-      )
-    );
-    setEditModalOpen(false);
-    setSelectedAdmin(null);
-    toast('success', 'Admin updated successfully');
+    try {
+      await apiClient.put(`/admin/admins/${selectedAdmin.id}`, { role: editRole });
+      setAdmins((prev) =>
+        prev.map((a) =>
+          a.id === selectedAdmin.id
+            ? { ...a, role: editRole, updatedAt: new Date().toISOString() }
+            : a
+        )
+      );
+      setEditModalOpen(false);
+      setSelectedAdmin(null);
+      toast('success', 'Admin updated successfully');
+    } catch {
+      toast('error', 'Failed to update admin');
+    }
   };
 
-  const handleToggleActive = (admin: User) => {
-    setAdmins((prev) =>
-      prev.map((a) =>
-        a.id === admin.id
-          ? { ...a, isActive: !a.isActive, updatedAt: new Date().toISOString() }
-          : a
-      )
-    );
-    toast(
-      'success',
-      `Admin ${admin.isActive ? 'deactivated' : 'activated'} successfully`
-    );
+  const handleToggleActive = async (admin: User) => {
+    try {
+      await apiClient.put(`/admin/admins/${admin.id}/toggle-active`);
+      setAdmins((prev) =>
+        prev.map((a) =>
+          a.id === admin.id
+            ? { ...a, isActive: !a.isActive, updatedAt: new Date().toISOString() }
+            : a
+        )
+      );
+      toast(
+        'success',
+        `Admin ${admin.isActive ? 'deactivated' : 'activated'} successfully`
+      );
+    } catch {
+      toast('error', 'Failed to update admin status');
+    }
   };
 
-  const handleDeleteAdmin = () => {
+  const handleDeleteAdmin = async () => {
     if (!selectedAdmin) return;
-    setAdmins((prev) => prev.filter((a) => a.id !== selectedAdmin.id));
-    setDeleteDialogOpen(false);
-    setSelectedAdmin(null);
-    toast('success', 'Admin removed successfully');
+    try {
+      await apiClient.delete(`/admin/admins/${selectedAdmin.id}`);
+      setAdmins((prev) => prev.filter((a) => a.id !== selectedAdmin.id));
+      setDeleteDialogOpen(false);
+      setSelectedAdmin(null);
+      toast('success', 'Admin removed successfully');
+    } catch {
+      toast('error', 'Failed to remove admin');
+    }
   };
 
   function openEdit(admin: User) {
@@ -156,6 +181,12 @@ export default function AdminsPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-sm text-surface-500">Loading administrators...</p>
+          </div>
+        ) : (
+        <>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-[22px] font-semibold text-primary-700">
@@ -468,6 +499,8 @@ export default function AdminsPage() {
           confirmLabel="Remove"
           confirmVariant="danger"
         />
+        </>
+        )}
       </div>
     </AdminLayout>
   );

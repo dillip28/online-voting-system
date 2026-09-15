@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Plus,
   Search,
@@ -27,8 +27,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { mockCandidates } from '@/mocks/candidates';
-import { mockElections } from '@/mocks/elections';
+import { candidatesApi } from '@/api/candidates';
+import { electionsApi } from '@/api/elections';
 import type { Candidate, CandidateStatus } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -65,15 +65,32 @@ export default function CandidatesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [electionFilter, setElectionFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [candidates, setCandidates] = useState<Candidate[]>(mockCandidates);
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [electionList, setElectionList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editCandidate, setEditCandidate] = useState<Candidate | null>(null);
   const [form, setForm] = useState<CandidateForm>(emptyForm);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [candRes, elecRes] = await Promise.all([
+          candidatesApi.getCandidates(),
+          electionsApi.getElections({ limit: 100 }),
+        ]);
+        setCandidates(candRes.data?.data || []);
+        setElectionList(elecRes.data?.data || []);
+      } catch { /* ignore */ }
+      finally { setIsLoading(false); }
+    };
+    fetchData();
+  }, []);
+
   const electionOptions = [
     { value: '', label: 'All Elections' },
-    ...mockElections.map((e) => ({ value: e.id, label: e.title })),
+    ...electionList.map((e) => ({ value: e.id, label: e.title })),
   ];
 
   const filtered = useMemo(() => {
@@ -118,32 +135,33 @@ export default function CandidatesPage() {
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      if (editCandidate) {
+        await candidatesApi.updateCandidate(editCandidate.id, {
+          name: form.name,
+          electionId: form.electionId,
+          positionId: form.positionId,
+          party: form.party || undefined,
+          biography: form.biography,
+          manifesto: form.manifesto,
+        });
+        toast('success', `${form.name} has been updated.`);
+      } else {
+        await candidatesApi.createCandidate({
+          name: form.name,
+          electionId: form.electionId,
+          positionId: form.positionId || 'pos_default',
+          party: form.party || undefined,
+          biography: form.biography,
+          manifesto: form.manifesto,
+        });
+        toast('success', `${form.name} has been added.`);
+      }
 
-    if (editCandidate) {
-      setCandidates((prev) =>
-        prev.map((c) =>
-          c.id === editCandidate.id
-            ? { ...c, name: form.name, electionId: form.electionId, party: form.party || undefined, biography: form.biography, manifesto: form.manifesto }
-            : c
-        )
-      );
-      toast('success', `${form.name} has been updated.`);
-    } else {
-      const newCandidate: Candidate = {
-        id: `cand_${Date.now()}`,
-        electionId: form.electionId,
-        positionId: form.positionId || 'pos_default',
-        name: form.name,
-        party: form.party || undefined,
-        biography: form.biography,
-        manifesto: form.manifesto,
-        status: 'pending',
-        votesReceived: 0,
-        createdAt: new Date().toISOString(),
-      };
-      setCandidates((prev) => [newCandidate, ...prev]);
-      toast('success', `${form.name} has been added.`);
+      const candRes = await candidatesApi.getCandidates();
+      setCandidates(candRes.data?.data || []);
+    } catch {
+      toast('error', 'Something went wrong. Please try again.');
     }
 
     setShowModal(false);
@@ -151,17 +169,27 @@ export default function CandidatesPage() {
     setEditCandidate(null);
   };
 
-  const handleDelete = (id: string) => {
-    setCandidates((prev) => prev.filter((c) => c.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await candidatesApi.deleteCandidate(id);
+      setCandidates((prev) => prev.filter((c) => c.id !== id));
+      toast('success', 'The candidate has been removed.');
+    } catch {
+      toast('error', 'Failed to delete candidate.');
+    }
     setDeleteTarget(null);
-    toast('success', 'The candidate has been removed.');
   };
 
-  const handleStatusChange = (id: string, status: CandidateStatus) => {
-    setCandidates((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status } : c))
-    );
-    toast('success', `Candidate has been ${status}.`);
+  const handleStatusChange = async (id: string, status: CandidateStatus) => {
+    try {
+      await candidatesApi.updateCandidate(id, { status });
+      setCandidates((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status } : c))
+      );
+      toast('success', `Candidate has been ${status}.`);
+    } catch {
+      toast('error', 'Failed to update candidate status.');
+    }
   };
 
   const updateField = <K extends keyof CandidateForm>(key: K, value: CandidateForm[K]) => {
@@ -243,7 +271,7 @@ export default function CandidatesPage() {
                 </TableHeader>
                 <TableBody>
                   {paginated.map((candidate) => {
-                    const election = mockElections.find((e) => e.id === candidate.electionId);
+                    const election = electionList.find((e) => e.id === candidate.electionId);
                     return (
                       <TableRow key={candidate.id}>
                         <TableCell>
@@ -334,7 +362,7 @@ export default function CandidatesPage() {
           />
           <Select
             label="Election"
-            options={mockElections.map((e) => ({ value: e.id, label: e.title }))}
+            options={electionList.map((e) => ({ value: e.id, label: e.title }))}
             placeholder="Select election"
             value={form.electionId}
             onChange={(e) => updateField('electionId', e.target.value)}

@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
+import { electionsApi } from '@/api/elections';
 import AdminLayout from '@/layouts/admin-layout';
 
 const electionTypeOptions = [
@@ -94,11 +95,26 @@ export default function ElectionCreatePage() {
     if (!validate()) return;
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-
-    toast('success', `"${form.title}" has been created successfully.`);
-    navigate('/admin/elections');
+    try {
+      const startDateTime = `${form.startDate}T${form.startTime}:00`;
+      const endDateTime = `${form.endDate}T${form.endTime}:00`;
+      await electionsApi.createElection({
+        title: form.title,
+        description: form.description,
+        type: form.type,
+        organization: form.organization,
+        startDate: startDateTime,
+        endDate: endDateTime,
+        enableNota: form.enableNota,
+        maxSelections: form.maxSelections,
+      });
+      toast('success', `"${form.title}" has been created successfully.`);
+      navigate('/admin/elections');
+    } catch (error) {
+      toast('error', 'Failed to create election. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
-import { mockElections } from '@/mocks/elections';
+import { electionsApi } from '@/api/elections';
 import AdminLayout from '@/layouts/admin-layout';
 
 const electionTypeOptions = [
@@ -48,27 +48,38 @@ export default function ElectionEditPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
   const [form, setForm] = useState<FormData | null>(null);
 
   useEffect(() => {
-    const election = mockElections.find((e) => e.id === id);
-    if (election) {
-      const startDate = new Date(election.startDate);
-      const endDate = new Date(election.endDate);
-      setForm({
-        title: election.title,
-        description: election.description,
-        type: election.type,
-        organization: election.organization,
-        startDate: startDate.toISOString().split('T')[0],
-        startTime: startDate.toTimeString().slice(0, 5),
-        endDate: endDate.toISOString().split('T')[0],
-        endTime: endDate.toTimeString().slice(0, 5),
-        enableNota: election.enableNota,
-        maxSelections: election.maxSelections,
-      });
-    }
+    const fetchElection = async () => {
+      try {
+        const res = await electionsApi.getElection(id!);
+        const election = res.data;
+        if (election) {
+          const startDate = new Date(election.startDate);
+          const endDate = new Date(election.endDate);
+          setForm({
+            title: election.title,
+            description: election.description,
+            type: election.type,
+            organization: election.organization,
+            startDate: startDate.toISOString().split('T')[0],
+            startTime: startDate.toTimeString().slice(0, 5),
+            endDate: endDate.toISOString().split('T')[0],
+            endTime: endDate.toTimeString().slice(0, 5),
+            enableNota: election.enableNota,
+            maxSelections: election.maxSelections,
+          });
+        }
+      } catch {
+        setForm(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchElection();
   }, [id]);
 
   const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
@@ -107,12 +118,37 @@ export default function ElectionEditPage() {
     if (!validate()) return;
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-
-    toast('success', `"${form!.title}" has been updated successfully.`);
-    navigate('/admin/elections');
+    try {
+      const startDateTime = `${form!.startDate}T${form!.startTime}:00`;
+      const endDateTime = `${form!.endDate}T${form!.endTime}:00`;
+      await electionsApi.updateElection(id!, {
+        title: form!.title,
+        description: form!.description,
+        type: form!.type,
+        organization: form!.organization,
+        startDate: startDateTime,
+        endDate: endDateTime,
+        enableNota: form!.enableNota,
+        maxSelections: form!.maxSelections,
+      });
+      toast('success', `"${form!.title}" has been updated successfully.`);
+      navigate('/admin/elections');
+    } catch (error) {
+      toast('error', 'Failed to update election. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (!form) {
     return (

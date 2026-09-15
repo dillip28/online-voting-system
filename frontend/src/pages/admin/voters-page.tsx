@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Users,
@@ -26,7 +26,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { mockUsers } from '@/mocks/users';
+import { votersApi } from '@/api/voters';
 import type { User } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -45,11 +45,21 @@ export default function VotersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [voters, setVoters] = useState<User[]>(
-    mockUsers.filter((u) => u.role === 'voter')
-  );
+  const [voters, setVoters] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [viewVoter, setViewVoter] = useState<User | null>(null);
   const [toggleTarget, setToggleTarget] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchVoters = async () => {
+      try {
+        const res = await votersApi.getVoters({ limit: 100 });
+        setVoters(res.data?.data || []);
+      } catch { setVoters([]); }
+      finally { setIsLoading(false); }
+    };
+    fetchVoters();
+  }, []);
 
   const filtered = useMemo(() => {
     return voters.filter((v) => {
@@ -73,12 +83,19 @@ export default function VotersPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleToggleActive = (id: string) => {
-    setVoters((prev) =>
-      prev.map((v) => (v.id === id ? { ...v, isActive: !v.isActive } : v))
-    );
+  const handleToggleActive = async (id: string) => {
+    const voter = voters.find((v) => v.id === id);
+    if (!voter) return;
+    try {
+      await votersApi.updateVoterStatus(id, { isEligible: !voter.isActive });
+      setVoters((prev) =>
+        prev.map((v) => (v.id === id ? { ...v, isActive: !v.isActive } : v))
+      );
+      toast('success', 'Voter account status has been toggled.');
+    } catch {
+      toast('error', 'Failed to toggle voter status.');
+    }
     setToggleTarget(null);
-    toast('success', 'Voter account status has been toggled.');
   };
 
   const handleImport = () => {
@@ -174,7 +191,7 @@ export default function VotersPage() {
                             ) : (
                               voter.fullName
                                 .split(' ')
-                                .map((n) => n[0])
+                                .map((n: string) => n[0])
                                 .join('')
                                 .toUpperCase()
                                 .slice(0, 2)

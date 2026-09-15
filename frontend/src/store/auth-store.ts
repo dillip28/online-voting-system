@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { User } from '@/types';
-import { authApi } from '@/api/auth';
 
 interface RegisterData {
   email: string;
@@ -29,6 +28,58 @@ interface AuthActions {
 
 type AuthStore = AuthState & AuthActions;
 
+// Mock users for demo (no backend required)
+const MOCK_USERS: Record<string, { password: string; user: User }> = {
+  'voter@test.com': {
+    password: 'password123',
+    user: {
+      id: 'usr_voter_001',
+      email: 'voter@test.com',
+      fullName: 'Alex Johnson',
+      phone: '+1-555-0101',
+      studentId: 'STU-2024-0892',
+      role: 'voter',
+      isVerified: true,
+      isActive: true,
+      twoFactorEnabled: false,
+      createdAt: '2026-01-15T10:00:00Z',
+      updatedAt: '2026-09-01T08:00:00Z',
+    },
+  },
+  'admin@test.com': {
+    password: 'password123',
+    user: {
+      id: 'usr_admin_001',
+      email: 'admin@test.com',
+      fullName: 'Sarah Williams',
+      phone: '+1-555-0202',
+      studentId: 'STU-2024-0001',
+      role: 'admin',
+      isVerified: true,
+      isActive: true,
+      twoFactorEnabled: false,
+      createdAt: '2026-01-10T10:00:00Z',
+      updatedAt: '2026-09-01T08:00:00Z',
+    },
+  },
+  'superadmin@test.com': {
+    password: 'password123',
+    user: {
+      id: 'usr_super_001',
+      email: 'superadmin@test.com',
+      fullName: 'David Admin',
+      phone: '+1-555-0303',
+      studentId: 'STU-2024-0000',
+      role: 'super_admin',
+      isVerified: true,
+      isActive: true,
+      twoFactorEnabled: false,
+      createdAt: '2026-01-01T10:00:00Z',
+      updatedAt: '2026-09-01T08:00:00Z',
+    },
+  },
+};
+
 const getStoredAuth = (): { token: string | null; user: User | null } => {
   try {
     const token = localStorage.getItem('auth_token');
@@ -51,35 +102,22 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true });
     try {
-      const response = await authApi.login(email, password);
-      if (response.success && response.data) {
-        const { token, user: userData } = response.data;
-        const user: User = {
-          id: userData.id,
-          email: userData.email,
-          fullName: userData.profile?.fullName || '',
-          phone: undefined,
-          studentId: userData.profile?.studentId,
-          role: userData.role as any,
-          avatar: undefined,
-          isVerified: userData.profile?.isVerified || false,
-          isActive: true,
-          twoFactorEnabled: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        localStorage.setItem('auth_token', token);
-        localStorage.setItem('auth_user', JSON.stringify(user));
-        set({
-          user,
-          token,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-        return true;
+      const mockEntry = MOCK_USERS[email.toLowerCase().trim()];
+      if (!mockEntry || mockEntry.password !== password) {
+        set({ isLoading: false });
+        return false;
       }
-      set({ isLoading: false });
-      return false;
+      const user = mockEntry.user;
+      const token = `mock_token_${user.id}`;
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('auth_user', JSON.stringify(user));
+      set({
+        user,
+        token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      return true;
     } catch {
       set({ isLoading: false });
       return false;
@@ -87,11 +125,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   },
 
   logout: async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // Ignore logout errors
-    }
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
     set({
@@ -105,50 +138,29 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   register: async (data: RegisterData) => {
     set({ isLoading: true });
     try {
-      const response = await authApi.register({
+      const newUser: User = {
+        id: `usr_${Date.now()}`,
         email: data.email,
-        password: data.password,
-        profile: {
-          fullName: data.fullName,
-          studentId: data.studentId || '',
-          department: data.department || 'General',
-          phone: data.phone,
-        },
+        fullName: data.fullName,
+        phone: data.phone,
+        studentId: data.studentId,
+        role: 'voter',
+        isVerified: false,
+        isActive: true,
+        twoFactorEnabled: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const token = `mock_token_${newUser.id}`;
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('auth_user', JSON.stringify(newUser));
+      set({
+        user: newUser,
+        token,
+        isAuthenticated: true,
+        isLoading: false,
       });
-      if (response.success && response.data) {
-        // Auto-login after registration
-        const loginResponse = await authApi.login(data.email, data.password);
-        if (loginResponse.success && loginResponse.data) {
-          const { token, user: userData } = loginResponse.data;
-          const user: User = {
-            id: userData.id,
-            email: userData.email,
-            fullName: userData.profile?.fullName || '',
-            phone: undefined,
-            studentId: userData.profile?.studentId,
-            role: userData.role as any,
-            avatar: undefined,
-            isVerified: userData.profile?.isVerified || false,
-            isActive: true,
-            twoFactorEnabled: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          localStorage.setItem('auth_token', token);
-          localStorage.setItem('auth_user', JSON.stringify(user));
-          set({
-            user,
-            token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return true;
-        }
-        set({ isLoading: false });
-        return false;
-      }
-      set({ isLoading: false });
-      return false;
+      return true;
     } catch {
       set({ isLoading: false });
       return false;

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Download, ClipboardList } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import {
 import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
-import { mockAuditLogs } from '@/mocks/audit-logs';
+import { apiClient } from '@/api/client';
 import AdminLayout from '@/layouts/admin-layout';
 
 const ITEMS_PER_PAGE = 8;
@@ -53,9 +53,22 @@ export default function AuditLogsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await apiClient.get<{ success: boolean; data: { items: any[] } }>('/admin/audit-logs', { params: { limit: 100 } });
+        setLogs(res.data?.items || []);
+      } catch { setLogs([]); }
+      finally { setIsLoading(false); }
+    };
+    fetchLogs();
+  }, []);
 
   const filtered = useMemo(() => {
-    return mockAuditLogs.filter((log) => {
+    return logs.filter((log) => {
       const matchesSearch =
         log.userName.toLowerCase().includes(search.toLowerCase()) ||
         log.action.toLowerCase().includes(search.toLowerCase()) ||

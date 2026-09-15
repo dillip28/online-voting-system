@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Pencil, Trash2, Vote } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Vote, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,8 @@ import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { mockElections } from '@/mocks/elections';
+import { useToast } from '@/components/ui/toast';
+import { electionsApi } from '@/api/elections';
 import type { ElectionStatus } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -39,7 +40,23 @@ export default function ElectionsListPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [elections, setElections] = useState(mockElections);
+  const [elections, setElections] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchElections = async () => {
+      try {
+        const res = await electionsApi.getElections({ limit: 100 });
+        setElections(res.data?.data || []);
+      } catch {
+        setElections([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchElections();
+  }, []);
 
   const filtered = useMemo(() => {
     return elections.filter((e) => {
@@ -57,8 +74,14 @@ export default function ElectionsListPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleDelete = (id: string) => {
-    setElections((prev) => prev.filter((e) => e.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await electionsApi.deleteElection(id);
+      setElections((prev) => prev.filter((e) => e.id !== id));
+      toast('success', 'Election deleted successfully.');
+    } catch {
+      toast('error', 'Failed to delete election.');
+    }
     setDeleteTarget(null);
   };
 
@@ -104,7 +127,12 @@ export default function ElectionsListPage() {
           </div>
         </Card>
 
-        {paginated.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-surface-400" />
+            <span className="ml-3 text-sm text-surface-500">Loading elections...</span>
+          </div>
+        ) : paginated.length === 0 ? (
           <EmptyState
             icon={Vote}
             title="No elections found"
@@ -141,15 +169,15 @@ export default function ElectionsListPage() {
                       <TableCell className="capitalize">{election.type}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <p className="text-surface-700">{formatDate(election.startDate)}</p>
-                          <p className="text-surface-400">to {formatDate(election.endDate)}</p>
+                          <p className="text-surface-700">{formatDate(election.startTime || election.startDate)}</p>
+                          <p className="text-surface-400">to {formatDate(election.endTime || election.endDate)}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={election.status as ElectionStatus} />
                       </TableCell>
-                      <TableCell className="text-center">{election.totalCandidates}</TableCell>
-                      <TableCell className="text-center">{election.votesCast.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">{election.positionsCount ?? election.positions?.length ?? election.totalCandidates ?? 0}</TableCell>
+                      <TableCell className="text-center">{(election.totalVotes ?? election._count?.ballots ?? election.votesCast ?? 0).toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
