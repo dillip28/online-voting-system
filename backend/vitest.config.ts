@@ -8,6 +8,9 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.ts'],
     exclude: ['node_modules', 'dist'],
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
   },
   resolve: {
     alias: {
