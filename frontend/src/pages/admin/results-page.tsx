@@ -26,8 +26,8 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { apiClient } from '@/api/client';
-import type { Result } from '@/types';
+import * as storage from '@/services/electionStorage';
+import type { Election } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
 const PIE_COLORS = ['#123B5D', '#167D72', '#D97706', '#DC2626', '#5380AF', '#1DA597'];
@@ -74,17 +74,17 @@ export default function ResultsPage() {
   const [result, setResult] = useState<ElectionResultResponse | null>(null);
 
   useEffect(() => {
-    const fetchElections = async () => {
-      try {
-        const res = await apiClient.get<{ success: boolean; data: { items: ElectionOption[] } }>('/admin/elections-with-results');
-        setElectionOptions(res.data?.items || []);
-      } catch {
-        setElectionOptions([]);
-      } finally {
-        setIsLoadingElections(false);
-      }
-    };
-    fetchElections();
+    const elections = storage.getElections({ limit: 100 });
+    setElectionOptions(
+      elections.items.map((e: Election) => ({
+        id: e.id,
+        title: e.title,
+        status: e.status,
+        totalVotes: e.votesCast,
+        eligibleVoters: e.eligibleVoters,
+      }))
+    );
+    setIsLoadingElections(false);
   }, []);
 
   useEffect(() => {
@@ -93,19 +93,13 @@ export default function ResultsPage() {
       return;
     }
 
-    const fetchResults = async () => {
-      setIsLoading(true);
-      try {
-        const res = await apiClient.get<{ success: boolean; data: ElectionResultResponse }>(`/elections/${selectedElectionId}/results`);
-        setResult(res.data || null);
-      } catch {
-        setResult(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchResults();
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      const r = storage.getElectionResults(selectedElectionId);
+      setResult(r as ElectionResultResponse | null);
+      setIsLoading(false);
+    }, 200);
+    return () => clearTimeout(timer);
   }, [selectedElectionId]);
 
   const selectedElection = electionOptions.find((e) => e.id === selectedElectionId);
@@ -118,7 +112,6 @@ export default function ResultsPage() {
       }
     : null;
 
-  // Flatten all candidates across positions for charts
   const allCandidates =
     result?.positions.flatMap((p) =>
       p.candidates.filter((c) => c.candidateId !== null)
@@ -149,7 +142,7 @@ export default function ResultsPage() {
             label="Select Election"
             options={electionOptions.map((e) => ({
               value: e.id,
-              label: `${e.title} (${e.status === 'results_published' ? 'Published' : e.status === 'closed' ? 'Closed' : 'Counting'})`,
+              label: `${e.title} (${e.status === 'results_published' ? 'Published' : e.status === 'closed' ? 'Closed' : e.status === 'active' ? 'Live' : 'Counting'})`,
             }))}
             placeholder="Choose an election to view results"
             value={selectedElectionId}

@@ -11,8 +11,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
 } from 'recharts';
 import {
   Vote,
@@ -25,8 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { apiClient } from '@/api/client';
+import { getDashboardStats } from '@/services/electionStorage';
 import AdminLayout from '@/layouts/admin-layout';
 
 const CHART_COLORS = {
@@ -42,56 +39,22 @@ const CHART_COLORS = {
 const STATUS_COLORS: Record<string, string> = {
   draft: '#94A3B8',
   scheduled: '#2563EB',
-  open: '#16A34A',
+  active: '#16A34A',
   closed: '#DC2626',
   results_published: '#167D72',
   archived: '#667085',
 };
 
-interface DashboardData {
-  stats: {
-    totalVoters: number;
-    verifiedVoters: number;
-    activeElections: number;
-    upcomingElections: number;
-    completedElections: number;
-    totalVotesCast: number;
-    turnoutPercentage: number;
-  };
-  recentElections: {
-    id: string;
-    title: string;
-    status: string;
-    totalVotes: number;
-  }[];
-  recentAuditLogs: {
-    id: string;
-    action: string;
-    actorEmail: string;
-    actorName: string;
-    targetType: string;
-    createdAt: string;
-  }[];
-  votesPerElection: { name: string; votes: number }[];
-  statusDistribution: Record<string, number>;
-}
-
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<ReturnType<typeof getDashboardStats> | null>(null);
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await apiClient.get<{ success: boolean; data: DashboardData }>('/admin/dashboard');
-        setData(res.data || null);
-      } catch {
-        setData(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDashboard();
+    const timer = setTimeout(() => {
+      setData(getDashboardStats());
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
   }, []);
 
   if (isLoading) {
@@ -304,7 +267,6 @@ export default function DashboardPage() {
                       {new Date(log.createdAt).toLocaleString()}
                     </p>
                   </div>
-                  <StatusBadge status={log.action === 'VOTE_CAST' ? 'active' : log.action === 'ELECTION_CREATED' ? 'draft' : log.action === 'ELECTION_OPENED' ? 'active' : log.action === 'ELECTION_CLOSED' ? 'closed' : log.action === 'RESULTS_PUBLISHED' ? 'results_published' : 'draft'} className="shrink-0" />
                 </div>
               ))
             )}

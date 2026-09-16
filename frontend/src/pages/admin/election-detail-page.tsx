@@ -8,17 +8,13 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowLeft,
-  Plus,
   Trash2,
-  UserCheck,
-  UserX,
 } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Badge } from '@/components/ui/badge';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -30,14 +26,13 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
-import { electionsApi } from '@/api/elections';
-import { candidatesApi } from '@/api/candidates';
+import * as storage from '@/services/electionStorage';
 import type { ElectionStatus } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
 const statusTransitions: Partial<Record<ElectionStatus, { next: ElectionStatus; label: string }[]>> = {
-  draft: [{ next: 'scheduled', label: 'Schedule' }],
-  scheduled: [{ next: 'active', label: 'Start Election' }],
+  draft: [{ next: 'scheduled', label: 'Publish' }],
+  scheduled: [{ next: 'active', label: 'Start Election' }, { next: 'draft', label: 'Unpublish' }],
   active: [{ next: 'closed', label: 'Close Election' }],
   closed: [{ next: 'results_published', label: 'Publish Results' }],
 };
@@ -50,33 +45,25 @@ export default function ElectionDetailPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [election, setElection] = useState<any>(null);
   const [candidates, setCandidates] = useState<any[]>([]);
-  const [voters, setVoters] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; next: ElectionStatus | null }>({
     open: false,
     next: null,
   });
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
-  const [removeVoterId, setRemoveVoterId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchElection = async () => {
-      try {
-        const res = await electionsApi.getElection(id!);
-        setElection(res.data || null);
-        const candRes = await electionsApi.getElectionCandidates(id!);
-        setCandidates(Array.isArray(candRes.data) ? candRes.data : []);
-        try {
-          const voterRes = await electionsApi.getElectionVoters(id!);
-          setVoters(voterRes.data?.items || []);
-        } catch { setVoters([]); }
-      } catch {
-        setElection(null);
-      } finally {
-        setIsLoading(false);
+    if (!id) return;
+    const timer = setTimeout(() => {
+      const e = storage.getElectionById(id);
+      setElection(e);
+      if (e) {
+        const cands = storage.getCandidates(id);
+        setCandidates(cands);
       }
-    };
-    fetchElection();
+      setIsLoading(false);
+    }, 200);
+    return () => clearTimeout(timer);
   }, [id]);
 
   if (isLoading) {
@@ -107,47 +94,29 @@ export default function ElectionDetailPage() {
 
   const transitions = statusTransitions[election.status as ElectionStatus] ?? [];
 
-  const handleStatusChange = async (next: ElectionStatus) => {
-    try {
-      if (next === 'scheduled') {
-        await electionsApi.scheduleElection(id!);
-      } else if (next === 'active') {
-        await electionsApi.openElection(id!);
-      } else if (next === 'closed') {
-        await electionsApi.closeElection(id!);
-      } else if (next === 'results_published') {
-        await electionsApi.publishResults(id!);
-      }
-      const res = await electionsApi.getElection(id!);
-      setElection(res.data || null);
-      toast('success', `Election status changed to ${next.replace('_', ' ')}.`);
-    } catch {
-      toast('error', 'Failed to change election status.');
-    }
+  const handleStatusChange = (next: ElectionStatus) => {
+    if (next === 'scheduled') storage.scheduleElection(id!);
+    else if (next === 'active') storage.openElection(id!);
+    else if (next === 'closed') storage.closeElection(id!);
+    else if (next === 'results_published') storage.publishResults(id!);
+    else if (next === 'draft') storage.unpublishElection(id!);
+
+    const updated = storage.getElectionById(id!);
+    setElection(updated);
+    toast('success', `Election status changed to ${next.replace('_', ' ')}.`);
     setStatusDialog({ open: false, next: null });
   };
 
-  const handleDeleteCandidate = async (candidateId: string) => {
-    try {
-      await candidatesApi.deleteCandidate(candidateId);
-      setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
-      toast('success', 'Candidate has been removed from the election.');
-    } catch {
-      toast('error', 'Failed to remove candidate.');
-    }
+  const handleDeleteCandidate = (candidateId: string) => {
+    storage.deleteCandidate(candidateId);
+    setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
+    toast('success', 'Candidate has been removed from the election.');
     setDeleteCandidateId(null);
-  };
-
-  const handleRemoveVoter = (voterId: string) => {
-    setVoters((prev) => prev.filter((v) => v.id !== voterId));
-    setRemoveVoterId(null);
-    toast('success', 'Voter has been removed from eligible voters.');
   };
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'candidates', label: 'Candidates', icon: Users },
-    { id: 'voters', label: 'Voters', icon: UserCheck },
     { id: 'results', label: 'Results', icon: Vote },
   ];
 
@@ -212,7 +181,7 @@ export default function ElectionDetailPage() {
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">Positions</dt>
-                  <dd className="text-sm font-medium text-surface-900">{election.positionsCount ?? election.positions?.length ?? 0}</dd>
+                  <dd className="text-sm font-medium text-surface-900">{election.positions?.length || 0}</dd>
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">Max Selections</dt>
@@ -233,30 +202,30 @@ export default function ElectionDetailPage() {
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">Start Date</dt>
                   <dd className="text-sm font-medium text-surface-900">
-                    {formatDateTime(election.startTime ?? election.startDate)}
+                    {formatDateTime(election.startDate)}
                   </dd>
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">End Date</dt>
                   <dd className="text-sm font-medium text-surface-900">
-                    {formatDateTime(election.endTime ?? election.endDate)}
+                    {formatDateTime(election.endDate)}
                   </dd>
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">Eligible Voters</dt>
                   <dd className="text-sm font-medium text-surface-900">
-                    {election.eligibleVoters.toLocaleString()}
+                    {(election.eligibleVoters || 0).toLocaleString()}
                   </dd>
                 </div>
                 <div className="flex justify-between border-b border-surface-100 pb-3">
                   <dt className="text-sm text-surface-500">Votes Cast</dt>
                   <dd className="text-sm font-medium text-surface-900">
-                    {election.votesCast.toLocaleString()}
+                    {(election.votesCast || 0).toLocaleString()}
                   </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-sm text-surface-500">Candidates</dt>
-                  <dd className="text-sm font-medium text-surface-900">{election.totalCandidates}</dd>
+                  <dd className="text-sm font-medium text-surface-900">{election.totalCandidates || candidates.length}</dd>
                 </div>
               </dl>
             </Card>
@@ -274,17 +243,13 @@ export default function ElectionDetailPage() {
               <p className="text-sm text-surface-500">
                 {candidates.length} candidate(s)
               </p>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Candidate
-              </Button>
             </div>
 
             {candidates.length === 0 ? (
               <EmptyState
                 icon={Users}
                 title="No candidates yet"
-                description="Add candidates to this election."
+                description="Add candidates when creating or editing the election."
               />
             ) : (
               <Card className="!p-0 overflow-x-auto">
@@ -302,90 +267,21 @@ export default function ElectionDetailPage() {
                     {candidates.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell>
-                          <p className="font-medium text-surface-900">{c.name}</p>
-                          <p className="text-xs text-surface-500">{c.position?.title ?? 'N/A'}</p>
+                          <div>
+                            <p className="font-medium text-surface-900">{c.name}</p>
+                            <p className="text-xs text-surface-500">{c.position?.title ?? 'N/A'}</p>
+                          </div>
                         </TableCell>
                         <TableCell>{c.party ?? 'Independent'}</TableCell>
                         <TableCell>
                           <StatusBadge status={c.status} />
                         </TableCell>
-                        <TableCell className="text-center">{c.votesReceived}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            {c.status === 'pending' && (
-                              <>
-                                <Button variant="ghost" size="sm">
-                                  <CheckCircle2 className="h-4 w-4 text-success-500" />
-                                </Button>
-                                <Button variant="ghost" size="sm">
-                                  <UserX className="h-4 w-4 text-danger-500" />
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleteCandidateId(c.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-danger-500" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'voters' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-surface-500">
-                {voters.length} eligible voter(s)
-              </p>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Voter
-              </Button>
-            </div>
-
-            {voters.length === 0 ? (
-              <EmptyState
-                icon={Users}
-                title="No voters"
-                description="Add eligible voters to this election."
-              />
-            ) : (
-              <Card className="!p-0 overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Student ID</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {voters.map((v) => (
-                      <TableRow key={v.id}>
-                        <TableCell className="font-medium text-surface-900">{v.fullName}</TableCell>
-                        <TableCell className="text-surface-500">{v.email}</TableCell>
-                        <TableCell>{v.studentId ?? 'N/A'}</TableCell>
-                        <TableCell>
-                          <Badge variant={v.isVerified ? 'success' : 'warning'}>
-                            {v.isVerified ? 'Verified' : 'Unverified'}
-                          </Badge>
-                        </TableCell>
+                        <TableCell className="text-center">{c.votesReceived || 0}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setRemoveVoterId(v.id)}
+                            onClick={() => setDeleteCandidateId(c.id)}
                           >
                             <Trash2 className="h-4 w-4 text-danger-500" />
                           </Button>
@@ -452,16 +348,6 @@ export default function ElectionDetailPage() {
         onConfirm={() => deleteCandidateId && handleDeleteCandidate(deleteCandidateId)}
         title="Remove Candidate"
         message="Are you sure you want to remove this candidate from the election?"
-        confirmLabel="Remove"
-        confirmVariant="danger"
-      />
-
-      <ConfirmationDialog
-        isOpen={removeVoterId !== null}
-        onClose={() => setRemoveVoterId(null)}
-        onConfirm={() => removeVoterId && handleRemoveVoter(removeVoterId)}
-        title="Remove Voter"
-        message="Are you sure you want to remove this voter from eligible voters?"
         confirmLabel="Remove"
         confirmVariant="danger"
       />

@@ -8,9 +8,10 @@ import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { apiClient } from '@/api/client';
 import type { SystemSettings } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
+
+const SETTINGS_KEY = 'vs_system_settings';
 
 const defaultSettings: SystemSettings = {
   electionDefaults: {
@@ -39,6 +40,18 @@ const defaultSettings: SystemSettings = {
   },
 };
 
+function loadSettings(): SystemSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) return { ...defaultSettings, ...JSON.parse(raw) };
+  } catch { /* use defaults */ }
+  return defaultSettings;
+}
+
+function saveSettings(settings: SystemSettings): void {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* ignore */ }
+}
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('election');
@@ -51,16 +64,11 @@ export default function SettingsPage() {
   );
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await apiClient.get<{ success: boolean; data: any }>('/admin/settings');
-        if (res.data) {
-          setSettings(prev => ({ ...prev, ...res.data }));
-        }
-      } catch { /* use defaults */ }
-      finally { setIsLoading(false); }
-    };
-    fetchSettings();
+    const timer = setTimeout(() => {
+      setSettings(loadSettings());
+      setIsLoading(false);
+    }, 200);
+    return () => clearTimeout(timer);
   }, []);
 
   const tabs = [
@@ -70,14 +78,10 @@ export default function SettingsPage() {
     { id: 'security', label: 'Security' },
   ];
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setIsSaving(true);
-    try {
-      await apiClient.put('/admin/settings', settings);
-      toast('success', 'Settings saved successfully.');
-    } catch {
-      toast('error', 'Failed to save settings.');
-    }
+    saveSettings(settings);
+    toast('success', 'Settings saved successfully.');
     setIsSaving(false);
     setShowConfirm(false);
   };

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Notification } from '@/types';
-import { notificationsApi } from '@/api/notifications';
+import { mockNotifications } from '@/mocks/notifications';
 
 interface NotificationState {
   notifications: Notification[];
@@ -25,49 +25,35 @@ export const useNotificationStore = create<NotificationStore>()((set) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
-      const response = await notificationsApi.getNotifications();
-      if (response.success && response.data) {
-        const { items, unreadCount } = response.data;
-        set({
-          notifications: items || [],
-          unreadCount: unreadCount || 0,
-          isLoading: false,
-        });
-      } else {
-        set({ isLoading: false });
-      }
+      const items = mockNotifications;
+      const unreadCount = items.filter((n) => !n.isRead).length;
+      set({
+        notifications: items,
+        unreadCount,
+        isLoading: false,
+      });
     } catch {
       set({ isLoading: false });
     }
   },
 
   markAsRead: async (id: string) => {
-    try {
-      await notificationsApi.markAsRead(id);
-      set((state) => {
-        const notifications = state.notifications.map((n) =>
-          n.id === id ? { ...n, isRead: true } : n
-        );
-        return {
-          notifications,
-          unreadCount: notifications.filter((n) => !n.isRead).length,
-        };
-      });
-    } catch {
-      // Ignore error
-    }
+    set((state) => {
+      const notifications = state.notifications.map((n) =>
+        n.id === id ? { ...n, isRead: true } : n
+      );
+      return {
+        notifications,
+        unreadCount: notifications.filter((n) => !n.isRead).length,
+      };
+    });
   },
 
   markAllAsRead: async () => {
-    try {
-      await notificationsApi.markAllAsRead();
-      set((state) => ({
-        notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
-        unreadCount: 0,
-      }));
-    } catch {
-      // Ignore error
-    }
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+      unreadCount: 0,
+    }));
   },
 
   addNotification: (notification) => {

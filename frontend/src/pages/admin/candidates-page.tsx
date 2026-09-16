@@ -27,8 +27,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { candidatesApi } from '@/api/candidates';
-import { electionsApi } from '@/api/elections';
+import * as storage from '@/services/electionStorage';
 import type { Candidate, CandidateStatus } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -75,19 +74,24 @@ export default function CandidatesPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [candRes, elecRes] = await Promise.all([
-          candidatesApi.getCandidates(),
-          electionsApi.getElections({ limit: 100 }),
-        ]);
-        setCandidates(candRes.data?.items || candRes.data || []);
-        setElectionList(elecRes.data?.items || []);
-      } catch { /* ignore */ }
-      finally { setIsLoading(false); }
-    };
-    fetchData();
+    const timer = setTimeout(() => {
+      const allCandidates = storage.getCandidates();
+      const elections = storage.getElections({ limit: 100 });
+      setCandidates(allCandidates);
+      setElectionList(elections.items);
+      setIsLoading(false);
+    }, 200);
+    return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!form.electionId) {
+      setPositionList([]);
+      return;
+    }
+    const election = storage.getElectionById(form.electionId);
+    setPositionList(election?.positions || []);
+  }, [form.electionId]);
 
   const electionOptions = [
     { value: '', label: 'All Elections' },
@@ -117,17 +121,6 @@ export default function CandidatesPage() {
     setShowModal(true);
   };
 
-  useEffect(() => {
-    if (!form.electionId) {
-      setPositionList([]);
-      return;
-    }
-
-    electionsApi.getElection(form.electionId)
-      .then((response) => setPositionList(response.data?.positions || []))
-      .catch(() => setPositionList([]));
-  }, [form.electionId]);
-
   const openEditModal = (candidate: Candidate) => {
     setEditCandidate(candidate);
     setForm({
@@ -141,67 +134,54 @@ export default function CandidatesPage() {
     setShowModal(true);
   };
 
-  const handleSave = async () => {
-    if (!form.name.trim() || !form.electionId || !form.positionId) {
-      toast('error', 'Name, election, and position are required.');
+  const handleSave = () => {
+    if (!form.name.trim() || !form.electionId) {
+      toast('error', 'Name and election are required.');
       return;
     }
 
-    try {
-      if (editCandidate) {
-        await candidatesApi.updateCandidate(editCandidate.id, {
-          name: form.name,
-          electionId: form.electionId,
-          positionId: form.positionId,
-          party: form.party || undefined,
-          biography: form.biography,
-          manifesto: form.manifesto,
-        });
-        toast('success', `${form.name} has been updated.`);
-      } else {
-        await candidatesApi.createCandidate({
-          name: form.name,
-          electionId: form.electionId,
-          positionId: form.positionId,
-          party: form.party || undefined,
-          biography: form.biography,
-          manifesto: form.manifesto,
-        });
-        toast('success', `${form.name} has been added.`);
-      }
-
-      const candRes = await candidatesApi.getCandidates();
-      setCandidates(Array.isArray(candRes.data) ? candRes.data : []);
-    } catch {
-      toast('error', 'Something went wrong. Please try again.');
+    if (editCandidate) {
+      storage.updateCandidate(editCandidate.id, {
+        name: form.name,
+        electionId: form.electionId,
+        positionId: form.positionId,
+        party: form.party || undefined,
+        biography: form.biography,
+        manifesto: form.manifesto,
+      });
+      toast('success', `${form.name} has been updated.`);
+    } else {
+      storage.createCandidate({
+        electionId: form.electionId,
+        positionId: form.positionId || `pos_default_${form.electionId}`,
+        name: form.name,
+        party: form.party || undefined,
+        biography: form.biography,
+        manifesto: form.manifesto,
+      });
+      toast('success', `${form.name} has been added.`);
     }
 
+    const allCandidates = storage.getCandidates();
+    setCandidates(allCandidates);
     setShowModal(false);
     setForm(emptyForm);
     setEditCandidate(null);
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await candidatesApi.deleteCandidate(id);
-      setCandidates((prev) => prev.filter((c) => c.id !== id));
-      toast('success', 'The candidate has been removed.');
-    } catch {
-      toast('error', 'Failed to delete candidate.');
-    }
+  const handleDelete = (id: string) => {
+    storage.deleteCandidate(id);
+    setCandidates((prev) => prev.filter((c) => c.id !== id));
+    toast('success', 'The candidate has been removed.');
     setDeleteTarget(null);
   };
 
-  const handleStatusChange = async (id: string, status: CandidateStatus) => {
-    try {
-      await candidatesApi.updateCandidate(id, { status });
-      setCandidates((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, status } : c))
-      );
-      toast('success', `Candidate has been ${status}.`);
-    } catch {
-      toast('error', 'Failed to update candidate status.');
-    }
+  const handleStatusChange = (id: string, status: CandidateStatus) => {
+    storage.updateCandidate(id, { status });
+    setCandidates((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status } : c))
+    );
+    toast('success', `Candidate has been ${status}.`);
   };
 
   const updateField = <K extends keyof CandidateForm>(key: K, value: CandidateForm[K]) => {
@@ -299,7 +279,7 @@ export default function CandidatesPage() {
                         <TableCell>
                           <StatusBadge status={candidate.status} />
                         </TableCell>
-                        <TableCell className="text-center text-[14px] text-surface-700">{candidate.votesReceived}</TableCell>
+                        <TableCell className="text-center text-[14px] text-surface-700">{candidate.votesReceived || 0}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {candidate.status === 'pending' && (
@@ -384,7 +364,7 @@ export default function CandidatesPage() {
           />
           <Select
             label="Position"
-            options={positionList.map((position) => ({ value: position.id, label: position.title }))}
+            options={positionList.map((position: any) => ({ value: position.id, label: position.title }))}
             placeholder={form.electionId ? 'Select position' : 'Select an election first'}
             value={form.positionId}
             onChange={(e) => updateField('positionId', e.target.value)}

@@ -26,7 +26,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { votersApi } from '@/api/voters';
+import { mockUsers } from '@/mocks/users';
 import type { User } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -51,14 +51,11 @@ export default function VotersPage() {
   const [toggleTarget, setToggleTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchVoters = async () => {
-      try {
-        const res = await votersApi.getVoters({ limit: 100 });
-        setVoters(res.data?.items || []);
-      } catch { setVoters([]); }
-      finally { setIsLoading(false); }
-    };
-    fetchVoters();
+    const timer = setTimeout(() => {
+      setVoters(mockUsers);
+      setIsLoading(false);
+    }, 200);
+    return () => clearTimeout(timer);
   }, []);
 
   const filtered = useMemo(() => {
@@ -83,18 +80,11 @@ export default function VotersPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleToggleActive = async (id: string) => {
-    const voter = voters.find((v) => v.id === id);
-    if (!voter) return;
-    try {
-      await votersApi.updateVoterStatus(id, { isVerified: !voter.isVerified });
-      setVoters((prev) =>
-        prev.map((v) => (v.id === id ? { ...v, isVerified: !v.isVerified } : v))
-      );
-      toast('success', 'Voter account status has been toggled.');
-    } catch {
-      toast('error', 'Failed to toggle voter status.');
-    }
+  const handleToggleActive = (id: string) => {
+    setVoters((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, isVerified: !v.isVerified } : v))
+    );
+    toast('success', 'Voter account status has been toggled.');
     setToggleTarget(null);
   };
 

@@ -17,7 +17,7 @@ import {
 import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
-import { apiClient } from '@/api/client';
+import { mockAuditLogs } from '@/mocks/audit-logs';
 import AdminLayout from '@/layouts/admin-layout';
 
 const ITEMS_PER_PAGE = 8;
@@ -57,14 +57,11 @@ export default function AuditLogsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const res = await apiClient.get<{ success: boolean; data: { items: any[] } }>('/admin/audit-logs', { params: { limit: 100 } });
-        setLogs(res.data?.items || []);
-      } catch { setLogs([]); }
-      finally { setIsLoading(false); }
-    };
-    fetchLogs();
+    const timer = setTimeout(() => {
+      setLogs(mockAuditLogs);
+      setIsLoading(false);
+    }, 200);
+    return () => clearTimeout(timer);
   }, []);
 
   const filtered = useMemo(() => {

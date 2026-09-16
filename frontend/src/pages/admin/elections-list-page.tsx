@@ -19,7 +19,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { electionsApi } from '@/api/elections';
+import * as storage from '@/services/electionStorage';
 import type { ElectionStatus } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -45,17 +45,12 @@ export default function ElectionsListPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchElections = async () => {
-      try {
-        const res = await electionsApi.getElections({ limit: 100 });
-        setElections(res.data?.items || []);
-      } catch {
-        setElections([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchElections();
+    const timer = setTimeout(() => {
+      const result = storage.getElections({ limit: 100 });
+      setElections(result.items);
+      setIsLoading(false);
+    }, 200);
+    return () => clearTimeout(timer);
   }, []);
 
   const filtered = useMemo(() => {
@@ -74,15 +69,23 @@ export default function ElectionsListPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleDelete = async (id: string) => {
-    try {
-      await electionsApi.deleteElection(id);
-      setElections((prev) => prev.filter((e) => e.id !== id));
-      toast('success', 'Election deleted successfully.');
-    } catch {
-      toast('error', 'Failed to delete election.');
-    }
+  const handleDelete = (id: string) => {
+    storage.deleteElection(id);
+    setElections((prev) => prev.filter((e) => e.id !== id));
+    toast('success', 'Election deleted successfully.');
     setDeleteTarget(null);
+  };
+
+  const handlePublishToggle = (id: string, currentStatus: string) => {
+    if (currentStatus === 'draft') {
+      storage.scheduleElection(id);
+      toast('success', 'Election has been published.');
+    } else if (currentStatus === 'scheduled') {
+      storage.unpublishElection(id);
+      toast('success', 'Election has been unpublished.');
+    }
+    const result = storage.getElections({ limit: 100 });
+    setElections(result.items);
   };
 
   return (
@@ -169,15 +172,15 @@ export default function ElectionsListPage() {
                       <TableCell className="capitalize">{election.type}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <p className="text-surface-700">{formatDate(election.startTime || election.startDate)}</p>
-                          <p className="text-surface-400">to {formatDate(election.endTime || election.endDate)}</p>
+                          <p className="text-surface-700">{formatDate(election.startDate)}</p>
+                          <p className="text-surface-400">to {formatDate(election.endDate)}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={election.status as ElectionStatus} />
                       </TableCell>
-                      <TableCell className="text-center">{election.positionsCount ?? election.positions?.length ?? election.totalCandidates ?? 0}</TableCell>
-                      <TableCell className="text-center">{(election.totalVotes ?? election._count?.ballots ?? election.votesCast ?? 0).toLocaleString()}</TableCell>
+                      <TableCell className="text-center">{election.totalCandidates ?? 0}</TableCell>
+                      <TableCell className="text-center">{(election.votesCast ?? 0).toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
@@ -194,6 +197,16 @@ export default function ElectionsListPage() {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
+                          {(election.status === 'draft' || election.status === 'scheduled') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePublishToggle(election.id, election.status)}
+                              title={election.status === 'draft' ? 'Publish' : 'Unpublish'}
+                            >
+                              <Vote className="h-4 w-4 text-accent-500" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"

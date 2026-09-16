@@ -18,21 +18,28 @@ import { cn, formatDateTime } from '@/lib/utils';
 import AdminLayout from '@/layouts/admin-layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { apiClient } from '@/api/client';
+import { getDashboardStats } from '@/services/electionStorage';
+import { mockAuditLogs } from '@/mocks/audit-logs';
 
 export default function SuperAdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await apiClient.get<{ success: boolean; data: any }>('/admin/dashboard');
-        setDashboardData(res.data || null);
-      } catch { setDashboardData(null); }
-      finally { setIsLoading(false); }
-    };
-    fetchDashboard();
+    const timer = setTimeout(() => {
+      const stats = getDashboardStats();
+      setDashboardData({
+        totalAdmins: 3,
+        totalElections: (stats.stats.activeElections || 0) + (stats.stats.upcomingElections || 0) + (stats.stats.completedElections || 0),
+        activeElections: stats.stats.activeElections,
+        totalVoters: stats.stats.totalVoters,
+        totalVotes: stats.stats.totalVotesCast,
+        systemHealth: 'Operational',
+        recentActivity: mockAuditLogs.slice(0, 5),
+      });
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
   }, []);
 
   const stats = useMemo(() => {

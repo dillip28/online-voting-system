@@ -86,7 +86,7 @@ export default function ElectionsPage() {
   }, [fetchElections]);
 
   const filteredElections = useMemo(() => {
-    let result = [...elections];
+    let result = [...elections].filter((e) => e.status !== 'draft');
 
     if (activeTab !== 'all') {
       if (activeTab === 'closed') {

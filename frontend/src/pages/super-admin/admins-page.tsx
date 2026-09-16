@@ -21,8 +21,32 @@ import { Dropdown } from '@/components/ui/dropdown';
 import { Pagination } from '@/components/ui/pagination';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { apiClient } from '@/api/client';
 import type { User } from '@/types';
+
+const DEMO_ADMINS: User[] = [
+  {
+    id: 'usr_001',
+    email: 'admin@test.com',
+    fullName: 'Sarah Williams',
+    role: 'admin',
+    isVerified: true,
+    isActive: true,
+    twoFactorEnabled: false,
+    createdAt: '2026-08-01T10:00:00Z',
+    updatedAt: '2026-08-01T10:00:00Z',
+  },
+  {
+    id: 'usr_004',
+    email: 'superadmin@test.com',
+    fullName: 'David Admin',
+    role: 'super_admin',
+    isVerified: true,
+    isActive: true,
+    twoFactorEnabled: false,
+    createdAt: '2026-07-01T10:00:00Z',
+    updatedAt: '2026-07-01T10:00:00Z',
+  },
+];
 
 const ITEMS_PER_PAGE = 8;
 
@@ -49,14 +73,11 @@ export default function AdminsPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const fetchAdmins = async () => {
-      try {
-        const res = await apiClient.get<{ success: boolean; data: any[] }>('/admin/admins');
-        setAdmins(res.data || []);
-      } catch { setAdmins([]); }
-      finally { setIsLoading(false); }
-    };
-    fetchAdmins();
+    const timer = setTimeout(() => {
+      setAdmins(DEMO_ADMINS);
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
   }, []);
 
   const filtered = useMemo(() => {
@@ -92,79 +113,63 @@ export default function AdminsPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAddAdmin = async (e: FormEvent) => {
+  const handleAddAdmin = (e: FormEvent) => {
     e.preventDefault();
     if (!validateAdd()) return;
 
-    try {
-      const res = await apiClient.post<{ success: boolean; data: User }>('/admin/admins', {
-        fullName: newAdmin.fullName,
-        email: newAdmin.email,
-        password: newAdmin.password,
-        role: newAdmin.role,
-      });
-      if (res.data) {
-        setAdmins((prev) => [...prev, res.data]);
-      }
-      setAddModalOpen(false);
-      setNewAdmin({ fullName: '', email: '', password: '', role: 'admin' });
-      toast('success', 'Admin created successfully');
-    } catch {
-      toast('error', 'Failed to create admin');
-    }
+    const admin: User = {
+      id: `usr_${Date.now()}`,
+      email: newAdmin.email,
+      fullName: newAdmin.fullName,
+      role: newAdmin.role,
+      isVerified: true,
+      isActive: true,
+      twoFactorEnabled: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setAdmins((prev) => [...prev, admin]);
+    setAddModalOpen(false);
+    setNewAdmin({ fullName: '', email: '', password: '', role: 'admin' });
+    toast('success', 'Admin created successfully');
   };
 
-  const handleEditAdmin = async (e: FormEvent) => {
+  const handleEditAdmin = (e: FormEvent) => {
     e.preventDefault();
     if (!selectedAdmin) return;
 
-    try {
-      await apiClient.put(`/admin/admins/${selectedAdmin.id}`, { role: editRole });
-      setAdmins((prev) =>
-        prev.map((a) =>
-          a.id === selectedAdmin.id
-            ? { ...a, role: editRole, updatedAt: new Date().toISOString() }
-            : a
-        )
-      );
-      setEditModalOpen(false);
-      setSelectedAdmin(null);
-      toast('success', 'Admin updated successfully');
-    } catch {
-      toast('error', 'Failed to update admin');
-    }
+    setAdmins((prev) =>
+      prev.map((a) =>
+        a.id === selectedAdmin.id
+          ? { ...a, role: editRole, updatedAt: new Date().toISOString() }
+          : a
+      )
+    );
+    setEditModalOpen(false);
+    setSelectedAdmin(null);
+    toast('success', 'Admin updated successfully');
   };
 
-  const handleToggleActive = async (admin: User) => {
-    try {
-      await apiClient.put(`/admin/admins/${admin.id}/toggle-active`);
-      setAdmins((prev) =>
-        prev.map((a) =>
-          a.id === admin.id
-            ? { ...a, isActive: !a.isActive, updatedAt: new Date().toISOString() }
-            : a
-        )
-      );
-      toast(
-        'success',
-        `Admin ${admin.isActive ? 'deactivated' : 'activated'} successfully`
-      );
-    } catch {
-      toast('error', 'Failed to update admin status');
-    }
+  const handleToggleActive = (admin: User) => {
+    setAdmins((prev) =>
+      prev.map((a) =>
+        a.id === admin.id
+          ? { ...a, isActive: !a.isActive, updatedAt: new Date().toISOString() }
+          : a
+      )
+    );
+    toast(
+      'success',
+      `Admin ${admin.isActive ? 'deactivated' : 'activated'} successfully`
+    );
   };
 
-  const handleDeleteAdmin = async () => {
+  const handleDeleteAdmin = () => {
     if (!selectedAdmin) return;
-    try {
-      await apiClient.delete(`/admin/admins/${selectedAdmin.id}`);
-      setAdmins((prev) => prev.filter((a) => a.id !== selectedAdmin.id));
-      setDeleteDialogOpen(false);
-      setSelectedAdmin(null);
-      toast('success', 'Admin removed successfully');
-    } catch {
-      toast('error', 'Failed to remove admin');
-    }
+    setAdmins((prev) => prev.filter((a) => a.id !== selectedAdmin.id));
+    setDeleteDialogOpen(false);
+    setSelectedAdmin(null);
+    toast('success', 'Admin removed successfully');
   };
 
   function openEdit(admin: User) {
