@@ -63,7 +63,7 @@ export const useVotingStore = create<VotingStore>()((set, get) => ({
     try {
       const choices = Array.from(selections.entries()).map(([positionId, candidateId]) => ({
         positionId,
-        candidateId: candidateId === 'NOTA' ? null : candidateId,
+        candidateId: candidateId === 'nota' ? null : candidateId,
       }));
 
       const response = await votesApi.submitBallot({

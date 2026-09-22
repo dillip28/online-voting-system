@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Download, ClipboardList } from 'lucide-react';
+import { Search, ClipboardList } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,38 +16,45 @@ import {
 } from '@/components/ui/table';
 import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useToast } from '@/components/ui/toast';
-import { mockAuditLogs } from '@/mocks/audit-logs';
+import * as auditStorage from '@/services/auditStorage';
 import AdminLayout from '@/layouts/admin-layout';
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 10;
 
 const actionOptions = [
   { value: '', label: 'All Actions' },
-  { value: 'election.create', label: 'Election Create' },
-  { value: 'election.update', label: 'Election Update' },
-  { value: 'election.start', label: 'Election Start' },
-  { value: 'candidate.approve', label: 'Candidate Approve' },
-  { value: 'vote.submit', label: 'Vote Submit' },
-  { value: 'results.publish', label: 'Results Publish' },
+  { value: 'election.create', label: 'Election Created' },
+  { value: 'election.schedule', label: 'Election Scheduled' },
+  { value: 'election.activate', label: 'Election Activated' },
+  { value: 'election.close', label: 'Election Closed' },
+  { value: 'election.publish', label: 'Results Published' },
+  { value: 'election.update', label: 'Election Updated' },
+  { value: 'position.create', label: 'Position Created' },
+  { value: 'candidate.approve', label: 'Candidate Approved' },
+  { value: 'candidate.reject', label: 'Candidate Rejected' },
+  { value: 'voter.create', label: 'Voter Added' },
+  { value: 'vote.submit', label: 'Vote Submitted' },
   { value: 'user.login', label: 'User Login' },
-  { value: 'settings.update', label: 'Settings Update' },
+  { value: 'settings.update', label: 'Settings Updated' },
 ];
 
 const actionVariantMap: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   'election.create': 'success',
+  'election.schedule': 'info',
+  'election.activate': 'success',
+  'election.close': 'warning',
+  'election.publish': 'success',
   'election.update': 'info',
-  'election.start': 'success',
+  'position.create': 'info',
   'candidate.approve': 'success',
   'candidate.reject': 'danger',
+  'voter.create': 'success',
   'vote.submit': 'info',
-  'results.publish': 'success',
   'user.login': 'default',
   'settings.update': 'warning',
 };
 
 export default function AuditLogsPage() {
-  const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -58,7 +65,8 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setLogs(mockAuditLogs);
+      const result = auditStorage.getAuditLogs({ limit: 500 });
+      setLogs(result.items);
       setIsLoading(false);
     }, 200);
     return () => clearTimeout(timer);
@@ -80,7 +88,7 @@ export default function AuditLogsPage() {
 
       return matchesSearch && matchesAction && matchesStart && matchesEnd;
     });
-  }, [search, actionFilter, startDate, endDate]);
+  }, [search, actionFilter, startDate, endDate, logs]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
@@ -88,24 +96,14 @@ export default function AuditLogsPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleExport = () => {
-    toast('info', 'Audit log export will be available soon.');
-  };
-
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-[22px] font-semibold text-primary-700">Audit Logs</h1>
-            <p className="mt-1 text-[14px] text-surface-500">
-              Track all system activities and changes.
-            </p>
-          </div>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export Logs
-          </Button>
+        <div>
+          <h1 className="text-[22px] font-semibold text-primary-700">Audit Logs</h1>
+          <p className="mt-1 text-[14px] text-surface-500">
+            Track all system activities and changes.
+          </p>
         </div>
 
         <Card className="!p-4">
@@ -160,7 +158,12 @@ export default function AuditLogsPage() {
           </p>
         </div>
 
-        {paginated.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-surface-200 border-t-primary-600" />
+            <span className="ml-3 text-sm text-surface-500">Loading logs...</span>
+          </div>
+        ) : paginated.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
             title="No audit logs found"
@@ -177,7 +180,6 @@ export default function AuditLogsPage() {
                     <TableHead>Action</TableHead>
                     <TableHead>Resource</TableHead>
                     <TableHead>Details</TableHead>
-                    <TableHead className="text-right">IP Address</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -198,7 +200,7 @@ export default function AuditLogsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={actionVariantMap[log.action] ?? 'default'}>
-                          {log.action}
+                          {log.action.replace('.', ' ').replace('_', ' ')}
                         </Badge>
                       </TableCell>
                       <TableCell className="capitalize text-surface-600 text-[14px]">
@@ -208,9 +210,6 @@ export default function AuditLogsPage() {
                         <p className="max-w-xs truncate text-[14px] text-surface-500">
                           {log.details ?? '-'}
                         </p>
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-[14px] text-surface-500">
-                        {log.ipAddress ?? 'N/A'}
                       </TableCell>
                     </TableRow>
                   ))}

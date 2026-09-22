@@ -33,20 +33,21 @@ export function computeElectionStatus(election: Election): ElectionStatus {
   if (election.status === 'results_published' || election.status === 'archived') {
     return election.status;
   }
+  if (election.status === 'closed') {
+    return 'closed';
+  }
+  if (election.status === 'active') {
+    return 'active';
+  }
   if (election.status === 'draft') {
     return 'draft';
   }
-  const now = new Date();
-  const start = new Date(election.startDate);
-  const end = new Date(election.endDate);
-
-  if (!election.publishedResults && election.status === 'closed') {
-    return 'closed';
+  if (election.status === 'scheduled') {
+    const now = new Date();
+    const start = new Date(election.startDate);
+    if (now >= start) return 'active';
+    return 'scheduled';
   }
-
-  if (now < start) return 'scheduled';
-  if (now >= start && now <= end) return 'active';
-  if (now > end) return 'closed';
   return election.status;
 }
 
@@ -254,6 +255,8 @@ export function createCandidate(data: {
   positionId: string;
   name: string;
   party?: string;
+  department?: string;
+  year?: string;
   biography: string;
   manifesto: string;
   photo?: string;
@@ -267,6 +270,8 @@ export function createCandidate(data: {
     positionId: data.positionId,
     name: data.name,
     party: data.party,
+    department: data.department,
+    year: data.year,
     biography: data.biography,
     manifesto: data.manifesto,
     photo: data.photo,
@@ -312,6 +317,110 @@ function updateElectionCandidateCount(electionId: string): void {
   updateElection(electionId, { totalCandidates: count });
 }
 
+// ─── Positions ──────────────────────────────────────────────
+
+export function getPositions(electionId: string): Position[] {
+  const election = getElectionById(electionId);
+  return election?.positions || [];
+}
+
+export function addPosition(electionId: string, data: {
+  title: string;
+  description?: string;
+  maxSelections?: number;
+}): Position | null {
+  const elections = safeGet<Election[]>(KEYS.ELECTIONS, []);
+  const index = elections.findIndex((e) => e.id === electionId);
+  if (index === -1) return null;
+
+  const election = elections[index];
+  const positions = election.positions || [];
+  const newPosition: Position = {
+    id: `pos_${generateId()}`,
+    electionId,
+    title: data.title,
+    description: data.description || '',
+    maxSelections: data.maxSelections || 1,
+    order: positions.length,
+  };
+
+  positions.push(newPosition);
+  elections[index] = {
+    ...election,
+    positions,
+    totalPositions: positions.length,
+    updatedAt: new Date().toISOString(),
+  };
+  safeSet(KEYS.ELECTIONS, elections);
+  return newPosition;
+}
+
+export function updatePosition(electionId: string, positionId: string, data: {
+  title?: string;
+  description?: string;
+  maxSelections?: number;
+  order?: number;
+}): Position | null {
+  const elections = safeGet<Election[]>(KEYS.ELECTIONS, []);
+  const eIndex = elections.findIndex((e) => e.id === electionId);
+  if (eIndex === -1) return null;
+
+  const positions = elections[eIndex].positions || [];
+  const pIndex = positions.findIndex((p) => p.id === positionId);
+  if (pIndex === -1) return null;
+
+  positions[pIndex] = { ...positions[pIndex], ...data };
+  elections[eIndex] = {
+    ...elections[eIndex],
+    positions,
+    updatedAt: new Date().toISOString(),
+  };
+  safeSet(KEYS.ELECTIONS, elections);
+  return positions[pIndex];
+}
+
+export function deletePosition(electionId: string, positionId: string): boolean {
+  const elections = safeGet<Election[]>(KEYS.ELECTIONS, []);
+  const eIndex = elections.findIndex((e) => e.id === electionId);
+  if (eIndex === -1) return false;
+
+  const candidates = safeGet<Candidate[]>(KEYS.CANDIDATES, []);
+  const hasCandidates = candidates.some((c) => c.electionId === electionId && c.positionId === positionId);
+  if (hasCandidates) return false;
+
+  const positions = (elections[eIndex].positions || []).filter((p) => p.id !== positionId);
+  elections[eIndex] = {
+    ...elections[eIndex],
+    positions,
+    totalPositions: positions.length,
+    updatedAt: new Date().toISOString(),
+  };
+  safeSet(KEYS.ELECTIONS, elections);
+  return true;
+}
+
+export function reorderPositions(electionId: string, positionIds: string[]): boolean {
+  const elections = safeGet<Election[]>(KEYS.ELECTIONS, []);
+  const eIndex = elections.findIndex((e) => e.id === electionId);
+  if (eIndex === -1) return false;
+
+  const positions = elections[eIndex].positions || [];
+  const reordered = positionIds
+    .map((id, i) => {
+      const pos = positions.find((p) => p.id === id);
+      return pos ? { ...pos, order: i } : null;
+    })
+    .filter(Boolean) as Position[];
+
+  elections[eIndex] = {
+    ...elections[eIndex],
+    positions: reordered,
+    updatedAt: new Date().toISOString(),
+  };
+  safeSet(KEYS.ELECTIONS, elections);
+  return true;
+}
+
 // ─── Votes ───────────────────────────────────────────────────
 
 export function getVotes(electionId: string): Record<string, number> {
@@ -340,7 +449,10 @@ export function saveVote(
   if (!votes[electionId]) votes[electionId] = {};
 
   for (const selection of selections) {
-    if (selection.candidateId && !selection.isNota) {
+    if (selection.isNota) {
+      const notaKey = `NOTA_${selection.positionId}`;
+      votes[electionId][notaKey] = (votes[electionId][notaKey] || 0) + 1;
+    } else if (selection.candidateId) {
       votes[electionId][selection.candidateId] =
         (votes[electionId][selection.candidateId] || 0) + 1;
     }
@@ -353,7 +465,7 @@ export function saveVote(
 
   const candidates = safeGet<Candidate[]>(KEYS.CANDIDATES, []);
   for (const selection of selections) {
-    if (selection.candidateId && !selection.isNota) {
+    if (!selection.isNota && selection.candidateId) {
       const idx = candidates.findIndex((c) => c.id === selection.candidateId);
       if (idx !== -1) {
         candidates[idx].votesReceived = (candidates[idx].votesReceived || 0) + 1;
@@ -366,7 +478,7 @@ export function saveVote(
   updateElection(electionId, { votesCast: totalVotes });
 
   const now = new Date().toISOString();
-  const confirmationId = `CONFIRM-${Date.now().toString(36).toUpperCase()}`;
+  const confirmationId = `VS-${new Date().getFullYear()}-${Date.now().toString(36).toUpperCase().slice(-6)}`;
 
   return { success: true, confirmationId, votedAt: now };
 }
@@ -446,6 +558,9 @@ export function getElectionResults(electionId: string): {
 
   const positions = (election.positions || []).map((pos) => {
     const posCandidates = candidates.filter((c) => c.positionId === pos.id);
+    const notaKey = `NOTA_${pos.id}`;
+    const notaVotes = electionVotes[notaKey] || 0;
+
     const posVotes = posCandidates.map((c) => ({
       candidateId: c.id,
       name: c.name,
@@ -457,12 +572,25 @@ export function getElectionResults(electionId: string): {
       isWinner: false,
     }));
 
+    if (notaVotes > 0) {
+      posVotes.push({
+        candidateId: null,
+        name: 'NOTA',
+        photoUrl: null,
+        party: null,
+        votes: notaVotes,
+        percentage: 0,
+        rank: 0,
+        isWinner: false,
+      });
+    }
+
     const totalPosVotes = posVotes.reduce((s, v) => s + v.votes, 0);
     posVotes.sort((a, b) => b.votes - a.votes);
     posVotes.forEach((v, i) => {
       v.rank = i + 1;
       v.percentage = totalPosVotes > 0 ? (v.votes / totalPosVotes) * 100 : 0;
-      v.isWinner = i === 0 && v.votes > 0;
+      v.isWinner = i === 0 && v.votes > 0 && v.candidateId !== null;
     });
 
     return {
@@ -471,22 +599,35 @@ export function getElectionResults(electionId: string): {
       positionDescription: pos.description || null,
       candidates: posVotes,
       totalVotes: totalPosVotes,
-      notaVotes: 0,
+      notaVotes,
     };
   });
+
+  const eligibleVoters = getVoterCountForElection(electionId) || election.eligibleVoters || 0;
 
   return {
     electionId,
     electionTitle: election.title,
     electionStatus: election.status,
-    totalEligibleVoters: election.eligibleVoters || 0,
+    totalEligibleVoters: eligibleVoters,
     totalVotesCast,
     turnoutPercentage:
-      (election.eligibleVoters || 0) > 0
-        ? (totalVotesCast / (election.eligibleVoters || 1)) * 100
+      eligibleVoters > 0
+        ? (totalVotesCast / eligibleVoters) * 100
         : 0,
     positions,
   };
+}
+
+function getVoterCountForElection(_electionId: string): number {
+  try {
+    const raw = localStorage.getItem('vs_voters');
+    if (!raw) return 0;
+    const voters = JSON.parse(raw) as Array<{ isActive: boolean }>;
+    return voters.filter((v) => v.isActive).length;
+  } catch {
+    return 0;
+  }
 }
 
 // ─── Dashboard Stats ─────────────────────────────────────────

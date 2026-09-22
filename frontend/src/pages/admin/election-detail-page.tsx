@@ -9,14 +9,18 @@ import {
   AlertTriangle,
   ArrowLeft,
   Trash2,
+  Plus,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Modal } from '@/components/ui/modal';
 import {
   Table,
   TableHeader,
@@ -27,12 +31,20 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
 import * as storage from '@/services/electionStorage';
-import type { ElectionStatus } from '@/types';
+import { addAuditLog } from '@/services/auditStorage';
+import { useAuthStore } from '@/store/auth-store';
+import type { ElectionStatus, Position } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
 const statusTransitions: Partial<Record<ElectionStatus, { next: ElectionStatus; label: string }[]>> = {
-  draft: [{ next: 'scheduled', label: 'Publish' }],
-  scheduled: [{ next: 'active', label: 'Start Election' }, { next: 'draft', label: 'Unpublish' }],
+  draft: [
+    { next: 'scheduled', label: 'Schedule' },
+    { next: 'active', label: 'Activate' },
+  ],
+  scheduled: [
+    { next: 'active', label: 'Start Election' },
+    { next: 'draft', label: 'Revert to Draft' },
+  ],
   active: [{ next: 'closed', label: 'Close Election' }],
   closed: [{ next: 'results_published', label: 'Publish Results' }],
 };
@@ -41,6 +53,7 @@ export default function ElectionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [election, setElection] = useState<any>(null);
@@ -51,6 +64,12 @@ export default function ElectionDetailPage() {
     next: null,
   });
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
+
+  const [showPositionModal, setShowPositionModal] = useState(false);
+  const [editPosition, setEditPosition] = useState<Position | null>(null);
+  const [positionTitle, setPositionTitle] = useState('');
+  const [positionDescription, setPositionDescription] = useState('');
+  const [deletePositionId, setDeletePositionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -101,6 +120,16 @@ export default function ElectionDetailPage() {
     else if (next === 'results_published') storage.publishResults(id!);
     else if (next === 'draft') storage.unpublishElection(id!);
 
+    addAuditLog({
+      userId: user?.id || 'admin',
+      userName: user?.fullName || 'Admin',
+      userRole: user?.role || 'admin',
+      action: `election.${next === 'active' ? 'activate' : next === 'closed' ? 'close' : next === 'results_published' ? 'publish' : next === 'scheduled' ? 'schedule' : 'update'}`,
+      resource: 'election',
+      resourceId: id!,
+      details: `Election status changed to ${next.replace('_', ' ')}`,
+    });
+
     const updated = storage.getElectionById(id!);
     setElection(updated);
     toast('success', `Election status changed to ${next.replace('_', ' ')}.`);
@@ -114,10 +143,75 @@ export default function ElectionDetailPage() {
     setDeleteCandidateId(null);
   };
 
+  const openAddPosition = () => {
+    setEditPosition(null);
+    setPositionTitle('');
+    setPositionDescription('');
+    setShowPositionModal(true);
+  };
+
+  const openEditPosition = (position: Position) => {
+    setEditPosition(position);
+    setPositionTitle(position.title);
+    setPositionDescription(position.description || '');
+    setShowPositionModal(true);
+  };
+
+  const handleSavePosition = () => {
+    if (!positionTitle.trim()) {
+      toast('error', 'Position title is required.');
+      return;
+    }
+
+    if (editPosition) {
+      storage.updatePosition(id!, editPosition.id, {
+        title: positionTitle,
+        description: positionDescription,
+      });
+      toast('success', 'Position updated.');
+    } else {
+      storage.addPosition(id!, {
+        title: positionTitle,
+        description: positionDescription,
+      });
+      addAuditLog({
+        userId: user?.id || 'admin',
+        userName: user?.fullName || 'Admin',
+        userRole: user?.role || 'admin',
+        action: 'position.create',
+        resource: 'position',
+        resourceId: id!,
+        details: `Added position: ${positionTitle}`,
+      });
+      toast('success', 'Position added.');
+    }
+
+    const updated = storage.getElectionById(id!);
+    setElection(updated);
+    setShowPositionModal(false);
+    setPositionTitle('');
+    setPositionDescription('');
+    setEditPosition(null);
+  };
+
+  const handleDeletePosition = (positionId: string) => {
+    const success = storage.deletePosition(id!, positionId);
+    if (!success) {
+      toast('error', 'Cannot delete position with existing candidates. Remove candidates first.');
+      setDeletePositionId(null);
+      return;
+    }
+    const updated = storage.getElectionById(id!);
+    setElection(updated);
+    toast('success', 'Position deleted.');
+    setDeletePositionId(null);
+  };
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'positions', label: 'Positions', icon: Vote },
     { id: 'candidates', label: 'Candidates', icon: Users },
-    { id: 'results', label: 'Results', icon: Vote },
+    { id: 'results', label: 'Results', icon: BarChart3 },
   ];
 
   return (
@@ -144,7 +238,7 @@ export default function ElectionDetailPage() {
             {transitions.map((t: any) => (
               <Button
                 key={t.next}
-                variant={t.next === 'active' ? 'success' : 'primary'}
+                variant={t.next === 'active' ? 'success' : t.next === 'results_published' ? 'primary' : 'primary'}
                 size="sm"
                 onClick={() => setStatusDialog({ open: true, next: t.next })}
               >
@@ -237,6 +331,83 @@ export default function ElectionDetailPage() {
           </div>
         )}
 
+        {activeTab === 'positions' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-surface-500">
+                {(election.positions || []).length} position(s)
+              </p>
+              <Button size="sm" onClick={openAddPosition}>
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Add Position
+              </Button>
+            </div>
+
+            {(election.positions || []).length === 0 ? (
+              <EmptyState
+                icon={Vote}
+                title="No positions yet"
+                description="Add positions to organize candidates in this election."
+              />
+            ) : (
+              <Card className="!p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">#</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-center">Candidates</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(election.positions || [])
+                      .sort((a: Position, b: Position) => a.order - b.order)
+                      .map((position: Position, index: number) => {
+                        const positionCandidates = candidates.filter(
+                          (c: any) => c.positionId === position.id
+                        );
+                        return (
+                          <TableRow key={position.id}>
+                            <TableCell className="text-surface-500">{index + 1}</TableCell>
+                            <TableCell className="font-medium text-surface-900">
+                              {position.title}
+                            </TableCell>
+                            <TableCell className="text-sm text-surface-600">
+                              {position.description || '—'}
+                            </TableCell>
+                            <TableCell className="text-center text-surface-700">
+                              {positionCandidates.length}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openEditPosition(position)}
+                                >
+                                  <Pencil className="h-4 w-4 text-surface-500" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeletePositionId(position.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-danger-500" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+          </div>
+        )}
+
         {activeTab === 'candidates' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -257,6 +428,7 @@ export default function ElectionDetailPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
+                      <TableHead>Position</TableHead>
                       <TableHead>Party</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-center">Votes</TableHead>
@@ -264,30 +436,38 @@ export default function ElectionDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {candidates.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-surface-900">{c.name}</p>
-                            <p className="text-xs text-surface-500">{c.position?.title ?? 'N/A'}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{c.party ?? 'Independent'}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={c.status} />
-                        </TableCell>
-                        <TableCell className="text-center">{c.votesReceived || 0}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteCandidateId(c.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-danger-500" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {candidates.map((c: any) => {
+                      const position = (election.positions || []).find(
+                        (p: Position) => p.id === c.positionId
+                      );
+                      return (
+                        <TableRow key={c.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-surface-900">{c.name}</p>
+                              {c.department && (
+                                <p className="text-xs text-surface-500">{c.department}{c.year ? ` - ${c.year}` : ''}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-surface-600">{position?.title ?? 'N/A'}</TableCell>
+                          <TableCell>{c.party ?? 'Independent'}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={c.status} />
+                          </TableCell>
+                          <TableCell className="text-center">{c.votesReceived || 0}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteCandidateId(c.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-danger-500" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </Card>
@@ -351,6 +531,57 @@ export default function ElectionDetailPage() {
         confirmLabel="Remove"
         confirmVariant="danger"
       />
+
+      <ConfirmationDialog
+        isOpen={deletePositionId !== null}
+        onClose={() => setDeletePositionId(null)}
+        onConfirm={() => deletePositionId && handleDeletePosition(deletePositionId)}
+        title="Delete Position"
+        message="Are you sure you want to delete this position? This cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="danger"
+      />
+
+      <Modal
+        isOpen={showPositionModal}
+        onClose={() => setShowPositionModal(false)}
+        title={editPosition ? 'Edit Position' : 'Add Position'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Position Title"
+            placeholder="e.g., President, Secretary, Treasurer"
+            value={positionTitle}
+            onChange={(e) => setPositionTitle(e.target.value)}
+          />
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-surface-700">
+              Description (optional)
+            </label>
+            <textarea
+              className={cn(
+                'block w-full rounded-md border border-surface-200 bg-white px-3 py-2 text-sm text-surface-900',
+                'placeholder:text-surface-400',
+                'hover:border-surface-300',
+                'focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20',
+                'min-h-[80px] resize-y'
+              )}
+              placeholder="Describe the role..."
+              value={positionDescription}
+              onChange={(e) => setPositionDescription(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-100">
+            <Button variant="outline" type="button" onClick={() => setShowPositionModal(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSavePosition}>
+              {editPosition ? 'Save Changes' : 'Add Position'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </AdminLayout>
   );
 }

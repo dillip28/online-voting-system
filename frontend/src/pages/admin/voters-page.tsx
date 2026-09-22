@@ -2,11 +2,12 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Users,
-  Download,
-  Upload,
   Eye,
   UserCheck,
   UserX,
+  Plus,
+  Trash2,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,9 @@ import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { mockUsers } from '@/mocks/users';
+import * as voterStorage from '@/services/voterStorage';
+import { addAuditLog } from '@/services/auditStorage';
+import { useAuthStore } from '@/store/auth-store';
 import type { User } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -40,21 +43,43 @@ const statusFilterOptions = [
   { value: 'inactive', label: 'Inactive' },
 ];
 
+interface VoterForm {
+  fullName: string;
+  email: string;
+  phone: string;
+  studentId: string;
+}
+
+const emptyVoterForm: VoterForm = {
+  fullName: '',
+  email: '',
+  phone: '',
+  studentId: '',
+};
+
 export default function VotersPage() {
   const { toast } = useToast();
+  const { user } = useAuthStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [voters, setVoters] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewVoter, setViewVoter] = useState<User | null>(null);
-  const [toggleTarget, setToggleTarget] = useState<string | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<{ id: string; type: 'active' | 'verified' } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editVoter, setEditVoter] = useState<User | null>(null);
+  const [form, setForm] = useState<VoterForm>(emptyVoterForm);
+
+  const loadVoters = () => {
+    const result = voterStorage.getVoters({ limit: 100 });
+    setVoters(result.items);
+    setIsLoading(false);
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setVoters(mockUsers);
-      setIsLoading(false);
-    }, 200);
+    const timer = setTimeout(loadVoters, 200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -80,20 +105,81 @@ export default function VotersPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
+  const openAddModal = () => {
+    setEditVoter(null);
+    setForm(emptyVoterForm);
+    setShowModal(true);
+  };
+
+  const openEditModal = (voter: User) => {
+    setEditVoter(voter);
+    setForm({
+      fullName: voter.fullName,
+      email: voter.email,
+      phone: voter.phone ?? '',
+      studentId: voter.studentId ?? '',
+    });
+    setShowModal(true);
+  };
+
+  const handleSave = () => {
+    if (!form.fullName.trim() || !form.email.trim()) {
+      toast('error', 'Name and email are required.');
+      return;
+    }
+
+    if (editVoter) {
+      voterStorage.updateVoter(editVoter.id, {
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone || undefined,
+        studentId: form.studentId || undefined,
+      });
+      toast('success', `${form.fullName} has been updated.`);
+    } else {
+      voterStorage.createVoter({
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone || undefined,
+        studentId: form.studentId || undefined,
+      });
+      addAuditLog({
+        userId: user?.id || 'admin',
+        userName: user?.fullName || 'Admin',
+        userRole: user?.role || 'admin',
+        action: 'voter.create',
+        resource: 'voter',
+        resourceId: 'new',
+        details: `Added voter: ${form.fullName}`,
+      });
+      toast('success', `${form.fullName} has been added.`);
+    }
+
+    loadVoters();
+    setShowModal(false);
+    setForm(emptyVoterForm);
+    setEditVoter(null);
+  };
+
+  const handleDelete = (id: string) => {
+    voterStorage.deleteVoter(id);
+    loadVoters();
+    toast('success', 'Voter has been removed.');
+    setDeleteTarget(null);
+  };
+
   const handleToggleActive = (id: string) => {
-    setVoters((prev) =>
-      prev.map((v) => (v.id === id ? { ...v, isVerified: !v.isVerified } : v))
-    );
+    voterStorage.toggleVoterActive(id);
+    loadVoters();
     toast('success', 'Voter account status has been toggled.');
     setToggleTarget(null);
   };
 
-  const handleImport = () => {
-    toast('info', 'CSV import feature will be available soon.');
-  };
-
-  const handleExport = () => {
-    toast('info', 'Voter export feature will be available soon.');
+  const handleToggleVerified = (id: string) => {
+    voterStorage.toggleVoterVerified(id);
+    loadVoters();
+    toast('success', 'Voter verification status has been toggled.');
+    setToggleTarget(null);
   };
 
   return (
@@ -106,16 +192,10 @@ export default function VotersPage() {
               Manage registered voters and their account status.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleImport}>
-              <Upload className="mr-2 h-4 w-4" />
-              Import CSV
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
+          <Button onClick={openAddModal}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Voter
+          </Button>
         </div>
 
         <Card className="!p-4">
@@ -150,11 +230,17 @@ export default function VotersPage() {
           </p>
         </div>
 
-        {paginated.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-surface-200 border-t-primary-600" />
+            <span className="ml-3 text-sm text-surface-500">Loading voters...</span>
+          </div>
+        ) : paginated.length === 0 ? (
           <EmptyState
             icon={Users}
             title="No voters found"
             description="Try adjusting your search or filter criteria."
+            action={{ children: 'Add Voter', onClick: openAddModal }}
           />
         ) : (
           <>
@@ -176,16 +262,12 @@ export default function VotersPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 text-xs font-semibold text-primary-600 border border-primary-100">
-                            {voter.avatar ? (
-                              <img src={voter.avatar} alt="" className="h-8 w-8 rounded-full" />
-                            ) : (
-                              voter.fullName
-                                .split(' ')
-                                .map((n: string) => n[0])
-                                .join('')
-                                .toUpperCase()
-                                .slice(0, 2)
-                            )}
+                            {voter.fullName
+                              .split(' ')
+                              .map((n: string) => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2)}
                           </div>
                           <span className="font-medium text-surface-800">{voter.fullName}</span>
                         </div>
@@ -214,13 +296,27 @@ export default function VotersPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setToggleTarget(voter.id)}
+                            onClick={() => openEditModal(voter)}
+                          >
+                            <Pencil className="h-4 w-4 text-surface-500" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setToggleTarget({ id: voter.id, type: 'active' })}
                           >
                             {voter.isActive ? (
                               <UserX className="h-4 w-4 text-danger-500" />
                             ) : (
                               <UserCheck className="h-4 w-4 text-success-500" />
                             )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteTarget(voter.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-danger-500" />
                           </Button>
                         </div>
                       </TableCell>
@@ -256,16 +352,12 @@ export default function VotersPage() {
           <div className="space-y-5">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 text-lg font-semibold text-primary-600 border border-primary-100">
-                {viewVoter.avatar ? (
-                  <img src={viewVoter.avatar} alt="" className="h-14 w-14 rounded-full" />
-                ) : (
-                  viewVoter.fullName
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)
-                )}
+                {viewVoter.fullName
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2)}
               </div>
               <div>
                 <h3 className="text-[16px] font-semibold text-surface-800">{viewVoter.fullName}</h3>
@@ -294,10 +386,8 @@ export default function VotersPage() {
                 </Badge>
               </div>
               <div>
-                <p className="text-[13px] text-surface-400">2FA Enabled</p>
-                <p className="text-[14px] font-medium text-surface-700">
-                  {viewVoter.twoFactorEnabled ? 'Yes' : 'No'}
-                </p>
+                <p className="text-[13px] text-surface-400">Role</p>
+                <p className="text-[14px] font-medium text-surface-700 capitalize">{viewVoter.role.replace('_', ' ')}</p>
               </div>
               <div>
                 <p className="text-[13px] text-surface-400">Joined</p>
@@ -310,14 +400,71 @@ export default function VotersPage() {
         )}
       </Modal>
 
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editVoter ? 'Edit Voter' : 'Add Voter'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Full Name"
+            placeholder="e.g., John Smith"
+            value={form.fullName}
+            onChange={(e) => setForm((prev) => ({ ...prev, fullName: e.target.value }))}
+          />
+          <Input
+            label="Email"
+            type="email"
+            placeholder="e.g., john@student.edu"
+            value={form.email}
+            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+          />
+          <Input
+            label="Phone"
+            placeholder="e.g., +1-555-0101"
+            value={form.phone}
+            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+          />
+          <Input
+            label="Student ID"
+            placeholder="e.g., STU-2024-0001"
+            value={form.studentId}
+            onChange={(e) => setForm((prev) => ({ ...prev, studentId: e.target.value }))}
+          />
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-100">
+            <Button variant="outline" onClick={() => setShowModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>
+              {editVoter ? 'Save Changes' : 'Add Voter'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       <ConfirmationDialog
         isOpen={toggleTarget !== null}
         onClose={() => setToggleTarget(null)}
-        onConfirm={() => toggleTarget && handleToggleActive(toggleTarget)}
-        title="Toggle Account Status"
-        message="Are you sure you want to toggle this voter's account status?"
+        onConfirm={() => {
+          if (!toggleTarget) return;
+          if (toggleTarget.type === 'active') handleToggleActive(toggleTarget.id);
+          else handleToggleVerified(toggleTarget.id);
+        }}
+        title="Toggle Voter Status"
+        message="Are you sure you want to toggle this voter's status?"
         confirmLabel="Confirm"
         confirmVariant="primary"
+      />
+
+      <ConfirmationDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        title="Delete Voter"
+        message="Are you sure you want to delete this voter? This action cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="danger"
       />
     </AdminLayout>
   );

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -8,12 +8,15 @@ import {
   BarChart3,
   Clock,
   AlertCircle,
+  CheckCircle,
 } from 'lucide-react';
 import { formatDate, formatNumber } from '@/lib/utils';
 import { Button, Card, Badge, Avatar, StatusBadge } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import { ErrorState } from '@/components/ui';
 import { useElectionStore } from '@/store/election-store';
+import { useAuthStore } from '@/store/auth-store';
+import * as storage from '@/services/electionStorage';
 import type { Candidate, ElectionType } from '@/types';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
@@ -68,6 +71,8 @@ export default function ElectionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentElection, candidates, isLoading, error, fetchElection, fetchCandidates } = useElectionStore();
+  const { user } = useAuthStore();
+  const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -75,6 +80,12 @@ export default function ElectionDetailPage() {
       fetchCandidates(id);
     }
   }, [id, fetchElection, fetchCandidates]);
+
+  useEffect(() => {
+    if (id && user) {
+      setHasVoted(storage.hasUserVoted(id, user.id));
+    }
+  }, [id, user]);
 
   if (isLoading) {
     return (
@@ -180,13 +191,19 @@ export default function ElectionDetailPage() {
         )}
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          {isActive && !hasEnded && (
+          {isActive && !hasEnded && !hasVoted && (
             <Link to={`/elections/${election.id}/vote`}>
               <Button size="lg" className="bg-primary-600 hover:bg-primary-700 text-white rounded-md">
                 <Vote className="mr-2 h-4 w-4" />
                 Start Voting
               </Button>
             </Link>
+          )}
+          {isActive && !hasEnded && hasVoted && (
+            <div className="flex items-center gap-2 rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-accent-700">
+              <CheckCircle className="h-5 w-5" />
+              <span className="text-[14px] font-medium">You have already voted in this election</span>
+            </div>
           )}
           {hasResults && (
             <Link to={`/elections/${election.id}/results`}>

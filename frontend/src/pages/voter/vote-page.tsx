@@ -79,9 +79,9 @@ function SelectStep() {
   const { selections, selectCandidate, removeSelection: _removeSelection } = useVotingStore();
   const [warningDismissed, setWarningDismissed] = useState(false);
 
-  const positions = Array.from(
-    new Map(candidates.map((c) => [c.positionId, { id: c.positionId, title: c.position?.title || `Position ${c.positionId}` }])).values()
-  );
+  const positions = (currentElection?.positions || [])
+    .slice()
+    .sort((a, b) => a.order - b.order);
 
   return (
     <div className="space-y-6">
@@ -167,23 +167,29 @@ function SelectStep() {
       })}
 
       {currentElection?.enableNota && (
-        <div>
-          <h3 className="mb-4 text-[15px] font-semibold text-primary-700">
+        <div className="rounded-lg border border-surface-200 bg-surface-50 p-4">
+          <h3 className="mb-2 text-[14px] font-semibold text-primary-700">
             None of the Above (NOTA)
           </h3>
-          <Button
-            variant="outline"
-            className="border-surface-200 text-primary-600 hover:bg-primary-50 rounded-md"
-            onClick={() => {
-              positions.forEach((p) => {
-                if (!selections.has(p.id)) {
-                  selectCandidate(p.id, 'nota');
-                }
-              });
-            }}
-          >
-            Select NOTA for all unselected positions
-          </Button>
+          <p className="mb-3 text-[13px] text-surface-500">
+            Select NOTA for any position where you prefer none of the candidates.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {positions.map((position) => {
+              const isNoted = selections.get(position.id) === 'nota';
+              return (
+                <Button
+                  key={position.id}
+                  variant={isNoted ? 'primary' : 'outline'}
+                  size="sm"
+                  className={isNoted ? 'bg-accent-600 text-white' : 'text-surface-600'}
+                  onClick={() => selectCandidate(position.id, 'nota')}
+                >
+                  NOTA — {position.title}
+                </Button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -191,12 +197,12 @@ function SelectStep() {
 }
 
 function ReviewStep() {
-  const { candidates, currentElection: _currentElection } = useElectionStore();
+  const { candidates, currentElection } = useElectionStore();
   const { selections } = useVotingStore();
 
-  const positions = Array.from(
-    new Map(candidates.map((c) => [c.positionId, { id: c.positionId, title: c.position?.title || `Position ${c.positionId}` }])).values()
-  );
+  const positions = (currentElection?.positions || [])
+    .slice()
+    .sort((a, b) => a.order - b.order);
 
   return (
     <div className="space-y-6">

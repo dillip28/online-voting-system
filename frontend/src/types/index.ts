@@ -64,6 +64,8 @@ export interface Candidate {
   name: string;
   photo?: string;
   party?: string;
+  department?: string;
+  year?: string;
   biography: string;
   manifesto: string;
   status: CandidateStatus;

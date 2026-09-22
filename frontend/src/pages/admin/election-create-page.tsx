@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateId } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/table';
 import { useAuthStore } from '@/store/auth-store';
 import * as storage from '@/services/electionStorage';
+import { addAuditLog } from '@/services/auditStorage';
 import AdminLayout from '@/layouts/admin-layout';
 
 const electionTypeOptions = [
@@ -30,6 +31,22 @@ const electionTypeOptions = [
   { value: 'organizational', label: 'Organizational' },
   { value: 'custom', label: 'Custom' },
 ];
+
+interface PositionForm {
+  id: string;
+  title: string;
+  description: string;
+  maxSelections: number;
+  candidates: CandidateForm[];
+}
+
+interface CandidateForm {
+  id: string;
+  name: string;
+  party: string;
+  manifesto: string;
+  photo: string;
+}
 
 interface FormData {
   title: string;
@@ -52,20 +69,12 @@ interface FormErrors {
   startTime?: string;
   endDate?: string;
   endTime?: string;
-  candidates?: string;
-}
-
-interface CandidateForm {
-  name: string;
-  position: string;
-  party: string;
-  manifesto: string;
-  photo: string;
+  positions?: string;
 }
 
 const emptyCandidateForm: CandidateForm = {
+  id: '',
   name: '',
-  position: '',
   party: '',
   manifesto: '',
   photo: '',
@@ -90,8 +99,15 @@ export default function ElectionCreatePage() {
     maxSelections: 1,
   });
 
-  const [candidates, setCandidates] = useState<(CandidateForm & { id: string })[]>([]);
+  const [positions, setPositions] = useState<PositionForm[]>([]);
+  const [showPositionModal, setShowPositionModal] = useState(false);
+  const [editPositionIndex, setEditPositionIndex] = useState<number | null>(null);
+  const [positionTitle, setPositionTitle] = useState('');
+  const [positionDescription, setPositionDescription] = useState('');
+  const [positionErrors, setPositionErrors] = useState<Record<string, string>>({});
+
   const [showCandidateModal, setShowCandidateModal] = useState(false);
+  const [candidatePositionIndex, setCandidatePositionIndex] = useState<number | null>(null);
   const [editCandidateIndex, setEditCandidateIndex] = useState<number | null>(null);
   const [candidateForm, setCandidateForm] = useState<CandidateForm>(emptyCandidateForm);
   const [candidateErrors, setCandidateErrors] = useState<Record<string, string>>({});
@@ -122,24 +138,88 @@ export default function ElectionCreatePage() {
       }
     }
 
-    if (candidates.length === 0) {
-      newErrors.candidates = 'At least one candidate is required';
+    if (positions.length === 0) {
+      newErrors.positions = 'At least one position is required';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const openAddCandidate = () => {
+  const openAddPosition = () => {
+    setEditPositionIndex(null);
+    setPositionTitle('');
+    setPositionDescription('');
+    setPositionErrors({});
+    setShowPositionModal(true);
+  };
+
+  const openEditPosition = (index: number) => {
+    setEditPositionIndex(index);
+    setPositionTitle(positions[index].title);
+    setPositionDescription(positions[index].description);
+    setPositionErrors({});
+    setShowPositionModal(true);
+  };
+
+  const validatePosition = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!positionTitle.trim()) errs.title = 'Position title is required';
+    setPositionErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSavePosition = () => {
+    if (!validatePosition()) return;
+
+    if (editPositionIndex !== null) {
+      setPositions((prev) =>
+        prev.map((p, i) =>
+          i === editPositionIndex ? { ...p, title: positionTitle, description: positionDescription } : p
+        )
+      );
+      toast('success', 'Position updated.');
+    } else {
+      setPositions((prev) => [
+        ...prev,
+        {
+          id: `pos_${generateId()}`,
+          title: positionTitle,
+          description: positionDescription,
+          maxSelections: 1,
+          candidates: [],
+        },
+      ]);
+      toast('success', 'Position added.');
+    }
+
+    setShowPositionModal(false);
+    setPositionTitle('');
+    setPositionDescription('');
+    setEditPositionIndex(null);
+
+    if (errors.positions) {
+      setErrors((prev) => ({ ...prev, positions: undefined }));
+    }
+  };
+
+  const handleDeletePosition = (index: number) => {
+    setPositions((prev) => prev.filter((_, i) => i !== index));
+    toast('success', 'Position removed.');
+  };
+
+  const openAddCandidate = (positionIndex: number) => {
+    setCandidatePositionIndex(positionIndex);
     setEditCandidateIndex(null);
     setCandidateForm(emptyCandidateForm);
     setCandidateErrors({});
     setShowCandidateModal(true);
   };
 
-  const openEditCandidate = (index: number) => {
-    setEditCandidateIndex(index);
-    setCandidateForm({ ...candidates[index] });
+  const openEditCandidate = (positionIndex: number, candidateIndex: number) => {
+    setCandidatePositionIndex(positionIndex);
+    setEditCandidateIndex(candidateIndex);
+    setCandidateForm({ ...positions[positionIndex].candidates[candidateIndex] });
     setCandidateErrors({});
     setShowCandidateModal(true);
   };
@@ -147,35 +227,52 @@ export default function ElectionCreatePage() {
   const validateCandidate = (): boolean => {
     const errs: Record<string, string> = {};
     if (!candidateForm.name.trim()) errs.name = 'Name is required';
-    if (!candidateForm.position.trim()) errs.position = 'Position is required';
     setCandidateErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleSaveCandidate = () => {
-    if (!validateCandidate()) return;
+    if (!validateCandidate() || candidatePositionIndex === null) return;
 
     if (editCandidateIndex !== null) {
-      setCandidates((prev) =>
-        prev.map((c, i) => (i === editCandidateIndex ? { ...candidateForm, id: c.id } : c))
+      setPositions((prev) =>
+        prev.map((p, pi) => {
+          if (pi !== candidatePositionIndex) return p;
+          return {
+            ...p,
+            candidates: p.candidates.map((c, ci) =>
+              ci === editCandidateIndex ? { ...candidateForm, id: c.id } : c
+            ),
+          };
+        })
       );
       toast('success', 'Candidate updated.');
     } else {
-      setCandidates((prev) => [...prev, { ...candidateForm, id: `cand_${generateId()}` }]);
+      setPositions((prev) =>
+        prev.map((p, pi) => {
+          if (pi !== candidatePositionIndex) return p;
+          return {
+            ...p,
+            candidates: [...p.candidates, { ...candidateForm, id: `cand_${generateId()}` }],
+          };
+        })
+      );
       toast('success', 'Candidate added.');
     }
 
     setShowCandidateModal(false);
     setCandidateForm(emptyCandidateForm);
+    setCandidatePositionIndex(null);
     setEditCandidateIndex(null);
-
-    if (errors.candidates) {
-      setErrors((prev) => ({ ...prev, candidates: undefined }));
-    }
   };
 
-  const handleDeleteCandidate = (index: number) => {
-    setCandidates((prev) => prev.filter((_, i) => i !== index));
+  const handleDeleteCandidate = (positionIndex: number, candidateIndex: number) => {
+    setPositions((prev) =>
+      prev.map((p, pi) => {
+        if (pi !== positionIndex) return p;
+        return { ...p, candidates: p.candidates.filter((_, ci) => ci !== candidateIndex) };
+      })
+    );
     toast('success', 'Candidate removed.');
   };
 
@@ -188,32 +285,33 @@ export default function ElectionCreatePage() {
       const startDateTime = `${form.startDate}T${form.startTime}:00`;
       const endDateTime = `${form.endDate}T${form.endTime}:00`;
 
-      const positionId = `pos_${generateId()}`;
-      const position = {
-        id: positionId,
+      const now = new Date().toISOString();
+      const createdPositions = positions.map((p, i) => ({
+        id: p.id,
         electionId: '',
-        title: 'Main Position',
-        description: 'Default position for this election',
-        maxSelections: form.maxSelections,
-        order: 0,
-      };
-
-      const electionCandidates = candidates.map((c) => ({
-        id: c.id,
-        electionId: '',
-        positionId,
-        name: c.name,
-        party: c.party || undefined,
-        biography: '',
-        manifesto: c.manifesto,
-        photo: c.photo || undefined,
-        status: 'approved' as const,
-        votesReceived: 0,
-        createdAt: new Date().toISOString(),
-        position: undefined,
+        title: p.title,
+        description: p.description,
+        maxSelections: p.maxSelections,
+        order: i,
       }));
 
-      storage.createElection({
+      const allCandidates = positions.flatMap((p) =>
+        p.candidates.map((c) => ({
+          id: c.id,
+          electionId: '',
+          positionId: p.id,
+          name: c.name,
+          party: c.party || undefined,
+          biography: '',
+          manifesto: c.manifesto,
+          photo: c.photo || undefined,
+          status: 'approved' as const,
+          votesReceived: 0,
+          createdAt: now,
+        }))
+      );
+
+      const election = storage.createElection({
         title: form.title,
         description: form.description,
         type: form.type,
@@ -223,8 +321,18 @@ export default function ElectionCreatePage() {
         enableNota: form.enableNota,
         maxSelections: form.maxSelections,
         createdBy: user?.id || 'admin',
-        positions: [position],
-        candidates: electionCandidates,
+        positions: createdPositions,
+        candidates: allCandidates,
+      });
+
+      addAuditLog({
+        userId: user?.id || 'admin',
+        userName: user?.fullName || 'Admin',
+        userRole: user?.role || 'admin',
+        action: 'election.create',
+        resource: 'election',
+        resourceId: election.id,
+        details: `Created election: ${form.title}`,
       });
 
       toast('success', `"${form.title}" has been created successfully.`);
@@ -251,7 +359,7 @@ export default function ElectionCreatePage() {
           </Button>
           <h1 className="text-[22px] font-semibold text-surface-900">Create Election</h1>
           <p className="mt-1 text-sm text-surface-500">
-            Set up a new election with all the required details.
+            Set up a new election with positions and candidates.
           </p>
         </div>
 
@@ -277,7 +385,6 @@ export default function ElectionCreatePage() {
                       'placeholder:text-surface-400',
                       'hover:border-surface-300',
                       'focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20',
-                      'disabled:cursor-not-allowed disabled:bg-surface-50 disabled:text-surface-400',
                       'min-h-[100px] resize-y'
                     )}
                     placeholder="Describe the election purpose and rules..."
@@ -285,21 +392,23 @@ export default function ElectionCreatePage() {
                     onChange={(e) => updateField('description', e.target.value)}
                   />
                 </div>
-                <Select
-                  label="Election Type"
-                  options={electionTypeOptions}
-                  placeholder="Select election type"
-                  value={form.type}
-                  onChange={(e) => updateField('type', e.target.value)}
-                  error={errors.type}
-                />
-                <Input
-                  label="Organization"
-                  placeholder="e.g., University Student Government"
-                  value={form.organization}
-                  onChange={(e) => updateField('organization', e.target.value)}
-                  error={errors.organization}
-                />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Select
+                    label="Election Type"
+                    options={electionTypeOptions}
+                    placeholder="Select election type"
+                    value={form.type}
+                    onChange={(e) => updateField('type', e.target.value)}
+                    error={errors.type}
+                  />
+                  <Input
+                    label="Organization"
+                    placeholder="e.g., University Student Government"
+                    value={form.organization}
+                    onChange={(e) => updateField('organization', e.target.value)}
+                    error={errors.organization}
+                  />
+                </div>
               </div>
             </div>
 
@@ -346,7 +455,7 @@ export default function ElectionCreatePage() {
                   onChange={(checked) => updateField('enableNota', checked)}
                 />
                 <Input
-                  label="Max Selections"
+                  label="Max Selections per Position"
                   type="number"
                   min={1}
                   max={10}
@@ -359,71 +468,127 @@ export default function ElectionCreatePage() {
             <div className="border-t border-surface-200 pt-6">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-[15px] font-semibold text-surface-900">Candidates</h2>
+                  <h2 className="text-[15px] font-semibold text-surface-900">Positions & Candidates</h2>
                   <p className="mt-0.5 text-xs text-surface-500">
-                    Add at least one candidate for this election.
+                    Add positions, then add candidates under each position.
                   </p>
                 </div>
-                <Button type="button" size="sm" onClick={openAddCandidate}>
+                <Button type="button" size="sm" onClick={openAddPosition}>
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Add Candidate
+                  Add Position
                 </Button>
               </div>
 
-              {errors.candidates && (
-                <p className="mb-3 text-sm text-danger-500">{errors.candidates}</p>
+              {errors.positions && (
+                <p className="mb-3 text-sm text-danger-500">{errors.positions}</p>
               )}
 
-              {candidates.length === 0 ? (
+              {positions.length === 0 ? (
                 <EmptyState
-                  icon={UserPlus}
-                  title="No candidates added"
-                  description="Click 'Add Candidate' to add candidates to this election."
+                  icon={Plus}
+                  title="No positions added"
+                  description="Click 'Add Position' to define positions for this election."
                 />
               ) : (
-                <Card className="!p-0 overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Position</TableHead>
-                        <TableHead>Party</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {candidates.map((candidate, index) => (
-                        <TableRow key={candidate.id}>
-                          <TableCell className="font-medium text-surface-900">
-                            {candidate.name}
-                          </TableCell>
-                          <TableCell className="text-surface-600">{candidate.position}</TableCell>
-                          <TableCell className="text-surface-600">{candidate.party || 'Independent'}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditCandidate(index)}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteCandidate(index)}
-                              >
-                                <Trash2 className="h-4 w-4 text-danger-500" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Card>
+                <div className="space-y-4">
+                  {positions.map((position, posIndex) => (
+                    <div
+                      key={position.id}
+                      className="rounded-lg border border-surface-200 bg-white"
+                    >
+                      <div className="flex items-center justify-between border-b border-surface-100 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <GripVertical className="h-4 w-4 text-surface-300" />
+                          <div>
+                            <h3 className="text-sm font-semibold text-surface-900">
+                              {position.title}
+                            </h3>
+                            {position.description && (
+                              <p className="text-xs text-surface-500">{position.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openAddCandidate(posIndex)}
+                          >
+                            <Plus className="mr-1 h-3.5 w-3.5" />
+                            Candidate
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditPosition(posIndex)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeletePosition(posIndex)}
+                          >
+                            <Trash2 className="h-4 w-4 text-danger-500" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {position.candidates.length === 0 ? (
+                        <div className="px-4 py-6 text-center text-sm text-surface-400">
+                          No candidates yet. Click "Candidate" to add one.
+                        </div>
+                      ) : (
+                        <div className="p-0">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Party</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {position.candidates.map((candidate, candIndex) => (
+                                <TableRow key={candidate.id}>
+                                  <TableCell className="font-medium text-surface-900">
+                                    {candidate.name}
+                                  </TableCell>
+                                  <TableCell className="text-surface-600">
+                                    {candidate.party || 'Independent'}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => openEditCandidate(posIndex, candIndex)}
+                                      >
+                                        Edit
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteCandidate(posIndex, candIndex)}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-danger-500" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -444,6 +609,51 @@ export default function ElectionCreatePage() {
       </div>
 
       <Modal
+        isOpen={showPositionModal}
+        onClose={() => setShowPositionModal(false)}
+        title={editPositionIndex !== null ? 'Edit Position' : 'Add Position'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Position Title"
+            placeholder="e.g., President, Secretary, Treasurer"
+            value={positionTitle}
+            onChange={(e) => {
+              setPositionTitle(e.target.value);
+              if (positionErrors.title) setPositionErrors((prev) => ({ ...prev, title: '' }));
+            }}
+            error={positionErrors.title}
+          />
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-surface-700">
+              Description (optional)
+            </label>
+            <textarea
+              className={cn(
+                'block w-full rounded-md border border-surface-200 bg-white px-3 py-2 text-sm text-surface-900',
+                'placeholder:text-surface-400',
+                'hover:border-surface-300',
+                'focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20',
+                'min-h-[80px] resize-y'
+              )}
+              placeholder="Describe the role or responsibilities..."
+              value={positionDescription}
+              onChange={(e) => setPositionDescription(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-100">
+            <Button variant="outline" type="button" onClick={() => setShowPositionModal(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSavePosition}>
+              {editPositionIndex !== null ? 'Save Changes' : 'Add Position'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
         isOpen={showCandidateModal}
         onClose={() => setShowCandidateModal(false)}
         title={editCandidateIndex !== null ? 'Edit Candidate' : 'Add Candidate'}
@@ -459,16 +669,6 @@ export default function ElectionCreatePage() {
               if (candidateErrors.name) setCandidateErrors((prev) => ({ ...prev, name: '' }));
             }}
             error={candidateErrors.name}
-          />
-          <Input
-            label="Position"
-            placeholder="e.g., President"
-            value={candidateForm.position}
-            onChange={(e) => {
-              setCandidateForm((prev) => ({ ...prev, position: e.target.value }));
-              if (candidateErrors.position) setCandidateErrors((prev) => ({ ...prev, position: '' }));
-            }}
-            error={candidateErrors.position}
           />
           <Input
             label="Party / Group"

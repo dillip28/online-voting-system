@@ -45,6 +45,8 @@ interface CandidateForm {
   electionId: string;
   positionId: string;
   party: string;
+  department: string;
+  year: string;
   biography: string;
   manifesto: string;
 }
@@ -54,6 +56,8 @@ const emptyForm: CandidateForm = {
   electionId: '',
   positionId: '',
   party: '',
+  department: '',
+  year: '',
   biography: '',
   manifesto: '',
 };
@@ -128,6 +132,8 @@ export default function CandidatesPage() {
       electionId: candidate.electionId,
       positionId: candidate.positionId,
       party: candidate.party ?? '',
+      department: candidate.department ?? '',
+      year: candidate.year ?? '',
       biography: candidate.biography,
       manifesto: candidate.manifesto,
     });
@@ -146,6 +152,8 @@ export default function CandidatesPage() {
         electionId: form.electionId,
         positionId: form.positionId,
         party: form.party || undefined,
+        department: form.department || undefined,
+        year: form.year || undefined,
         biography: form.biography,
         manifesto: form.manifesto,
       });
@@ -156,6 +164,8 @@ export default function CandidatesPage() {
         positionId: form.positionId || `pos_default_${form.electionId}`,
         name: form.name,
         party: form.party || undefined,
+        department: form.department || undefined,
+        year: form.year || undefined,
         biography: form.biography,
         manifesto: form.manifesto,
       });
@@ -270,6 +280,11 @@ export default function CandidatesPage() {
                           <div>
                             <p className="font-medium text-surface-800">{candidate.name}</p>
                             <p className="text-xs text-surface-400">{candidate.position?.title ?? 'N/A'}</p>
+                            {(candidate.department || candidate.year) && (
+                              <p className="text-xs text-surface-400">
+                                {candidate.department}{candidate.year ? ` - ${candidate.year}` : ''}
+                              </p>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-[14px] text-surface-600">
@@ -376,6 +391,20 @@ export default function CandidatesPage() {
             value={form.party}
             onChange={(e) => updateField('party', e.target.value)}
           />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Department"
+              placeholder="e.g., Computer Science"
+              value={form.department}
+              onChange={(e) => updateField('department', e.target.value)}
+            />
+            <Input
+              label="Year"
+              placeholder="e.g., III"
+              value={form.year}
+              onChange={(e) => updateField('year', e.target.value)}
+            />
+          </div>
           <div>
             <label className="mb-1 block text-[14px] font-medium text-surface-700">Biography</label>
             <textarea

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import { Save, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,9 @@ import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
+import { resetDemoData } from '@/services/electionStorage';
+import { resetDemoVoters } from '@/services/voterStorage';
+import { resetDemoAuditLogs } from '@/services/auditStorage';
 import type { SystemSettings } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -59,6 +62,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [ipWhitelistText, setIpWhitelistText] = useState(
     defaultSettings.security.ipWhitelist.join('\n')
   );
@@ -84,6 +88,14 @@ export default function SettingsPage() {
     toast('success', 'Settings saved successfully.');
     setIsSaving(false);
     setShowConfirm(false);
+  };
+
+  const handleReset = () => {
+    resetDemoData();
+    resetDemoVoters();
+    resetDemoAuditLogs();
+    toast('success', 'All demo data has been reset to defaults.');
+    setShowResetConfirm(false);
   };
 
   const updateElection = <K extends keyof SystemSettings['electionDefaults']>(
@@ -311,7 +323,15 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            className="text-danger-600 border-danger-200 hover:bg-danger-50"
+            onClick={() => setShowResetConfirm(true)}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Reset Demo Data
+          </Button>
           <Button onClick={() => setShowConfirm(true)} isLoading={isSaving}>
             <Save className="mr-2 h-4 w-4" />
             Save Settings
@@ -327,6 +347,16 @@ export default function SettingsPage() {
         message="Are you sure you want to save these system settings? This will affect all users."
         confirmLabel="Save Settings"
         confirmVariant="primary"
+      />
+
+      <ConfirmationDialog
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={handleReset}
+        title="Reset Demo Data"
+        message="This will reset all elections, candidates, voters, votes, and audit logs to the initial demo state. This action cannot be undone."
+        confirmLabel="Reset All Data"
+        confirmVariant="danger"
       />
     </AdminLayout>
   );
