@@ -1,109 +1,127 @@
 # VoteSecure — Online Voting System
 
-A secure, production-grade online voting platform for college and university elections. Built with privacy-preserving ballot architecture, role-based access control, and real-time election management.
+A frontend demo of an online voting platform for college and university elections. Built with React, TypeScript, and Tailwind CSS, this project simulates a complete election workflow — from creating elections to casting votes and publishing results — using browser `localStorage` for data persistence.
+
+> **Note:** This is a frontend-only demonstration project. It is not intended for real-world elections without a secure backend, database, and proper authentication infrastructure.
 
 ## Features
 
-- **Privacy-Preserving Ballots** — Voter identity separated from ballot content
-- **Election Lifecycle** — Draft → Scheduled → Open → Closed → Counting → Published → Archived
-- **Role-Based Access** — Voter, Admin, Super Admin with granular permissions
-- **Real-Time Dashboard** — Live vote counts, turnout analytics, audit logs
-- **Bulk Voter Import** — CSV-style voter registration with department/year filtering
-- **Candidate Management** — Per-position candidate approval workflow
+- **Admin Dashboard** — Overview of elections, voters, votes cast, and recent activity with charts
+- **Election Creation & Lifecycle** — Create elections with schedule, manage full lifecycle from Draft to Published Results
+- **Position Management** — Define multiple positions per election (e.g., President, Secretary, Treasurer)
+- **Candidate Management** — Add, edit, approve, reject, and delete candidates with party and manifesto details
+- **Voter Management** — Admin can view, add, edit, and toggle voter eligibility status
+- **Voting Interface** — Step-by-step voting flow: select candidates per position, review ballot, confirm submission
+- **Duplicate-Vote Prevention** — Each voter can only vote once per election (tracked in localStorage)
+- **Results Dashboard** — Vote counts, percentages, turnout, and winner badges per position with charts
+- **Audit Logs** — Track all administrative actions with timestamp, actor, and details
 - **NOTA Support** — None of the Above option on every ballot
-- **Results Publishing** — Manual or automatic result visibility controls
-- **Audit Trail** — Every action logged with actor, timestamp, and metadata
+- **Role-Based Access** — Voter, Admin, and Super Admin roles with separate dashboards
+- **Responsive Design** — Works on desktop and mobile devices
+- **Dark Mode** — Toggle dark mode with preference persistence
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, Zustand, Recharts |
-| Backend | Express.js, TypeScript, Prisma ORM, Zod validation |
-| Database | PostgreSQL 16 (Docker) |
-| Auth | JWT (access + refresh tokens), bcrypt |
-| Testing | Vitest (unit + integration) |
+| UI Framework | React 19 |
+| Language | TypeScript |
+| Build Tool | Vite 8 |
+| Styling | Tailwind CSS v4 |
+| State Management | Zustand |
+| Routing | React Router DOM v7 |
+| Charts | Recharts |
+| Icons | Lucide React |
+| Utilities | clsx, tailwind-merge, date-fns |
 
 ## Project Structure
 
 ```
 online-voting-system/
-├── backend/
-│   ├── src/
-│   │   ├── config/         # Environment config
-│   │   ├── lib/            # JWT, Prisma client
-│   │   ├── middleware/      # Auth, RBAC, rate-limiting, validation, error handling
-│   │   ├── routes/         # API route definitions
-│   │   ├── services/       # Business logic
-│   │   ├── validators/     # Zod schemas
-│   │   └── index.ts        # Express server entry
-│   ├── tests/              # Unit + integration tests
-│   ├── prisma/             # Schema + migrations
-│   └── docker-compose.yml
 ├── frontend/
 │   ├── src/
-│   │   ├── api/            # API client + endpoint modules
+│   │   ├── api/            # API layer (localStorage-based)
 │   │   ├── components/     # Reusable UI components
 │   │   ├── layouts/        # Page layouts (admin, dashboard, public)
-│   │   ├── lib/            # Utilities
-│   │   ├── pages/          # Route pages (admin, voter, super-admin, auth)
+│   │   ├── lib/            # Utility functions
+│   │   ├── mocks/          # Mock data for demo
+│   │   ├── pages/          # Route pages (admin, voter, auth)
+│   │   ├── services/       # localStorage data layer
 │   │   ├── store/          # Zustand stores
-│   │   └── types/          # TypeScript types
-│   └── vite.config.ts
-├── docs/                   # Architecture, API, design docs
-└── .github/workflows/      # CI pipeline
+│   │   └── types/          # TypeScript type definitions
+│   ├── vite.config.ts
+│   └── package.json
+├── docs/                   # Architecture documentation
+├── .github/workflows/      # CI pipeline
+└── package.json            # Root package.json
 ```
 
-## Quick Start
+## How to Run
 
 ### Prerequisites
-- Node.js 18+
-- Docker & Docker Compose (for PostgreSQL)
 
-### 1. Clone & Install
+- Node.js 18+
+
+### Install & Start
 
 ```bash
+# Clone the repository
 git clone https://github.com/dillip28/online-voting-system.git
 cd online-voting-system
 
-# Backend
-cd backend && npm install
+# Install dependencies
+npm install
 
-# Frontend
-cd ../frontend && npm install
+# Start development server
+npm run dev
 ```
 
-### 2. Start Database
+The app will be available at `http://localhost:5173`.
+
+### Other Commands
 
 ```bash
-cd backend
-docker-compose up -d
+npm run build        # Build for production
+npm run lint         # Lint the codebase
+npm run typecheck    # Run TypeScript type checking
 ```
 
-### 3. Configure Environment
+## How It Works
 
-```bash
-cd backend
-cp .env.example .env
-# Edit .env with your JWT_SECRET, DATABASE_URL, etc.
+```
+Admin Login
+  → Create Election (title, type, schedule, positions)
+  → Add Candidates under each position
+  → Add Voters
+  → Activate Election
+
+Voter Login
+  → View active elections
+  → Select candidates per position (or NOTA)
+  → Review ballot
+  → Confirm vote
+  → Receive confirmation receipt
+
+Admin
+  → Close Election
+  → Publish Results
+  → View Results Dashboard (vote counts, turnout, winners)
+  → Review Audit Logs
 ```
 
-### 4. Run Migrations & Seed
+## Data Storage
 
-```bash
-npx prisma migrate dev
-npx prisma db seed
-```
+All data is stored in the browser's `localStorage`. No external database or backend server is required.
 
-### 5. Start Development Servers
+| Key | Content |
+|-----|---------|
+| `vs_elections` | Election records with positions |
+| `vs_candidates` | Candidate records per election/position |
+| `vs_votes` | Vote tallies per election |
+| `vs_voted_users` | Tracks which voters have voted in which elections |
+| `vs_audit_logs` | Administrative action audit trail |
 
-```bash
-# Terminal 1 — Backend (port 5000)
-cd backend && npm run dev
-
-# Terminal 2 — Frontend (port 3000)
-cd frontend && npm run dev
-```
+Demo data (sample elections, candidates, voters) is automatically seeded on first visit. A "Reset Demo Data" option is available in Admin Settings.
 
 ## Test Accounts
 
@@ -113,84 +131,26 @@ cd frontend && npm run dev
 | Admin | `admin@test.com` | `password123` |
 | Super Admin | `superadmin@test.com` | `password123` |
 
-> **Note:** Auth currently uses mock login (no backend required). To enable real API auth, revert `frontend/src/store/auth-store.ts` to use `authApi.login()`.
+## Limitations
 
-## API Endpoints
+- **Frontend-only demo** — No backend server, database, or real API
+- **localStorage persistence** — Data is stored in the browser and tied to the device/browser instance
+- **No real authentication** — Login uses hardcoded demo credentials with mock tokens
+- **No server-side security** — No bcrypt hashing, no JWT verification, no rate limiting
+- **No cross-device sync** — Each browser has its own independent data
+- **Not suitable for real elections** — Would require a secure backend, encrypted database, proper authentication, and independent auditing
 
-### Auth
-- `POST /api/auth/login` — Login
-- `POST /api/auth/register` — Register (voter only)
-- `POST /api/auth/logout` — Logout
-- `POST /api/auth/forgot-password` — Request password reset
-- `POST /api/auth/reset-password` — Reset password with token
+## Future Improvements
 
-### Elections
-- `GET /api/elections` — List elections (paginated, filterable)
-- `POST /api/elections` — Create election (admin)
-- `GET /api/elections/:id` — Get election detail
-- `PUT /api/elections/:id` — Update election
-- `POST /api/elections/:id/open` — Open election for voting
-- `POST /api/elections/:id/close` — Close election
-- `POST /api/elections/:id/publish-results` — Publish results
-
-### Voting
-- `POST /api/voting/ballot` — Cast ballot
-- `GET /api/voting/status/:electionId` — Check voting status
-- `GET /api/voting/history` — Voting history
-
-### Admin
-- `GET /api/admin/dashboard` — Dashboard stats
-- `GET /api/admin/audit-logs` — Audit log list
-- `GET /api/admin/settings` — System settings
-- `PUT /api/admin/settings` — Update settings
-
-### Candidates
-- `GET /api/candidates` — List candidates
-- `POST /api/candidates` — Create candidate
-- `PUT /api/candidates/:id` — Update candidate
-- `DELETE /api/candidates/:id` — Delete candidate
-
-### Voters
-- `GET /api/voters` — List voters
-- `POST /api/voters/import` — Bulk import voters
-- `POST /api/voters/assign` — Assign voters to election
-
-## Scripts
-
-```bash
-# Backend
-npm run dev          # Start dev server
-npm run build        # Build for production
-npm run test         # Run tests
-npm run lint         # Lint code
-
-# Frontend
-npm run dev          # Start dev server
-npm run build        # Build for production
-npm run preview      # Preview production build
-```
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `5000` |
-| `NODE_ENV` | Environment | `development` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://...` |
-| `JWT_SECRET` | JWT signing secret (min 32 chars) | — |
-| `JWT_EXPIRES_IN` | Token expiry (seconds) | `3600` |
-| `CORS_ORIGIN` | Allowed origin | `http://localhost:3000` |
-
-## Security Features
-
-- bcrypt password hashing (12 rounds)
-- JWT with short-lived access tokens
-- Row-level locking for vote integrity (SELECT FOR UPDATE)
-- Rate limiting on auth endpoints (5 req/15min)
-- Input validation on all endpoints (Zod)
-- Audit logging for all state changes
-- Privacy-preserving ballot design (no voter-ballot link)
-- CORS with origin whitelist
+- Backend API with Express.js or similar
+- PostgreSQL database with Prisma ORM
+- Secure authentication (JWT, bcrypt)
+- Server-side vote integrity checks
+- Encrypted ballot storage
+- Multi-device support
+- CSV voter import
+- Email notifications
+- Production deployment
 
 ## License
 
