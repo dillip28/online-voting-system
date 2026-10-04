@@ -4,12 +4,10 @@ import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { authApi } from '@/api/auth';
-import { useToast } from '@/components/ui/toast';
+import { supabase } from '@/lib/supabaseClient';
 import type { FormEvent } from 'react';
 
 export default function ForgotPasswordPage() {
-  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -34,9 +32,13 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      await authApi.forgotPassword(email);
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
       setSubmitted(true);
-    } catch (err: any) {
+    } catch {
+      // Intentionally show the same confirmation regardless of outcome
+      // to avoid leaking which emails are registered.
       setSubmitted(true);
     } finally {
       setLoading(false);

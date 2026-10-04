@@ -5,6 +5,8 @@ import { formatDate, truncate } from '@/lib/utils';
 import { Button, Card, Badge, Input, StatusBadge, Tabs, EmptyState } from '@/components/ui';
 import { SkeletonCard } from '@/components/ui';
 import { useElectionStore } from '@/store/election-store';
+import { useAuthStore } from '@/store/auth-store';
+import { getVoterElectionAccess, getAvailabilityLabel, type VoterElectionAccess } from '@/services/eligibilityService';
 import type { ElectionType } from '@/types';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
@@ -33,7 +35,7 @@ const typeBadgeVariant: Record<ElectionType, 'default' | 'info' | 'success' | 'w
   custom: 'default',
 };
 
-function ElectionCard({ election }: { election: any }) {
+function ElectionCard({ election, access }: { election: any; access?: VoterElectionAccess }) {
   return (
     <Card className="border border-surface-200 rounded-lg bg-white flex flex-col justify-between">
       <div>
@@ -61,7 +63,14 @@ function ElectionCard({ election }: { election: any }) {
             {election.totalCandidates} candidates
           </span>
         </div>
-        <StatusBadge status={election.status} />
+        <div className="flex items-center gap-2">
+          <StatusBadge status={election.status} />
+          {access && (
+            <span className="inline-flex items-center rounded-full bg-surface-100 px-2.5 py-0.5 text-[11px] font-medium text-surface-600">
+              {getAvailabilityLabel(access.availability)}
+            </span>
+          )}
+        </div>
       </div>
       <div className="mt-4">
         <Link to={`/elections/${election.id}`}>
@@ -77,6 +86,8 @@ function ElectionCard({ election }: { election: any }) {
 
 export default function ElectionsPage() {
   const { elections, isLoading, fetchElections } = useElectionStore();
+  const { user } = useAuthStore();
+  const [accessMap, setAccessMap] = useState<Map<string, VoterElectionAccess>>(new Map());
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +95,14 @@ export default function ElectionsPage() {
   useEffect(() => {
     fetchElections();
   }, [fetchElections]);
+
+  useEffect(() => {
+    if (user && elections.length > 0) {
+      getVoterElectionAccess(user.id, elections)
+        .then(setAccessMap)
+        .catch(() => setAccessMap(new Map()));
+    }
+  }, [user, elections]);
 
   const filteredElections = useMemo(() => {
     let result = [...elections].filter((e) => e.status !== 'draft');
@@ -171,7 +190,7 @@ export default function ElectionsPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {filteredElections.map((election) => (
-              <ElectionCard key={election.id} election={election} />
+              <ElectionCard key={election.id} election={election} access={accessMap.get(election.id)} />
             ))}
           </div>
         )}

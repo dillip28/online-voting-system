@@ -8,6 +8,7 @@ import {
   Server,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { saveSystemSettings } from '@/services/settingsService';
 import AdminLayout from '@/layouts/admin-layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,6 @@ import { Select } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
-const SYS_SETTINGS_KEY = 'vs_system_settings';
 
 interface GeneralSettings {
   systemName: string;
@@ -69,7 +69,7 @@ export default function SystemSettingsPage() {
 
   const [saving, setSaving] = useState(false);
 
-  const handleSave = (e: FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
@@ -99,7 +99,7 @@ export default function SystemSettingsPage() {
           ipWhitelist: [],
         },
       };
-      localStorage.setItem(SYS_SETTINGS_KEY, JSON.stringify(settings));
+      await saveSystemSettings(settings);
       toast('success', 'Settings saved successfully');
     } catch {
       toast('error', 'Failed to save settings.');

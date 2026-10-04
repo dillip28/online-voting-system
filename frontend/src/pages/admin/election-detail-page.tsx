@@ -30,8 +30,10 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
-import * as storage from '@/services/electionStorage';
-import { addAuditLog } from '@/services/auditStorage';
+import * as storage from '@/services/electionService';
+import * as positionService from '@/services/positionService';
+import * as candidateService from '@/services/candidateService';
+import { addAuditLog } from '@/services/auditService';
 import { useAuthStore } from '@/store/auth-store';
 import type { ElectionStatus, Position } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
@@ -73,11 +75,11 @@ export default function ElectionDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    const timer = setTimeout(() => {
-      const e = storage.getElectionById(id);
+    const timer = setTimeout(async () => {
+      const e = await storage.getElectionById(id);
       setElection(e);
       if (e) {
-        const cands = storage.getCandidates(id);
+        const cands = await candidateService.getCandidates(id);
         setCandidates(cands);
       }
       setIsLoading(false);
@@ -113,12 +115,12 @@ export default function ElectionDetailPage() {
 
   const transitions = statusTransitions[election.status as ElectionStatus] ?? [];
 
-  const handleStatusChange = (next: ElectionStatus) => {
-    if (next === 'scheduled') storage.scheduleElection(id!);
-    else if (next === 'active') storage.openElection(id!);
-    else if (next === 'closed') storage.closeElection(id!);
-    else if (next === 'results_published') storage.publishResults(id!);
-    else if (next === 'draft') storage.unpublishElection(id!);
+  const handleStatusChange = async (next: ElectionStatus) => {
+    if (next === 'scheduled') await storage.scheduleElection(id!);
+    else if (next === 'active') await storage.openElection(id!);
+    else if (next === 'closed') await storage.closeElection(id!);
+    else if (next === 'results_published') await storage.publishResults(id!);
+    else if (next === 'draft') await storage.unpublishElection(id!);
 
     addAuditLog({
       userId: user?.id || 'admin',
@@ -130,14 +132,14 @@ export default function ElectionDetailPage() {
       details: `Election status changed to ${next.replace('_', ' ')}`,
     });
 
-    const updated = storage.getElectionById(id!);
+    const updated = await storage.getElectionById(id!);
     setElection(updated);
     toast('success', `Election status changed to ${next.replace('_', ' ')}.`);
     setStatusDialog({ open: false, next: null });
   };
 
-  const handleDeleteCandidate = (candidateId: string) => {
-    storage.deleteCandidate(candidateId);
+  const handleDeleteCandidate = async (candidateId: string) => {
+    await candidateService.deleteCandidate(candidateId);
     setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
     toast('success', 'Candidate has been removed from the election.');
     setDeleteCandidateId(null);
@@ -157,20 +159,20 @@ export default function ElectionDetailPage() {
     setShowPositionModal(true);
   };
 
-  const handleSavePosition = () => {
+  const handleSavePosition = async () => {
     if (!positionTitle.trim()) {
       toast('error', 'Position title is required.');
       return;
     }
 
     if (editPosition) {
-      storage.updatePosition(id!, editPosition.id, {
+      await positionService.updatePosition(id!, editPosition.id, {
         title: positionTitle,
         description: positionDescription,
       });
       toast('success', 'Position updated.');
     } else {
-      storage.addPosition(id!, {
+      await positionService.addPosition(id!, {
         title: positionTitle,
         description: positionDescription,
       });
@@ -186,7 +188,7 @@ export default function ElectionDetailPage() {
       toast('success', 'Position added.');
     }
 
-    const updated = storage.getElectionById(id!);
+    const updated = await storage.getElectionById(id!);
     setElection(updated);
     setShowPositionModal(false);
     setPositionTitle('');
@@ -194,14 +196,14 @@ export default function ElectionDetailPage() {
     setEditPosition(null);
   };
 
-  const handleDeletePosition = (positionId: string) => {
-    const success = storage.deletePosition(id!, positionId);
+  const handleDeletePosition = async (positionId: string) => {
+    const success = await positionService.deletePosition(id!, positionId);
     if (!success) {
       toast('error', 'Cannot delete position with existing candidates. Remove candidates first.');
       setDeletePositionId(null);
       return;
     }
-    const updated = storage.getElectionById(id!);
+    const updated = await storage.getElectionById(id!);
     setElection(updated);
     toast('success', 'Position deleted.');
     setDeletePositionId(null);

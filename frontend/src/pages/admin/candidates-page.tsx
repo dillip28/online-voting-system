@@ -27,7 +27,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import * as storage from '@/services/electionStorage';
+import * as candidateService from '@/services/candidateService';
+import * as electionService from '@/services/electionService';
 import type { Candidate, CandidateStatus } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -71,16 +72,16 @@ export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [electionList, setElectionList] = useState<any[]>([]);
   const [positionList, setPositionList] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editCandidate, setEditCandidate] = useState<Candidate | null>(null);
   const [form, setForm] = useState<CandidateForm>(emptyForm);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const allCandidates = storage.getCandidates();
-      const elections = storage.getElections({ limit: 100 });
+    const timer = setTimeout(async () => {
+      const allCandidates = await candidateService.getCandidates();
+      const elections = await electionService.getElections({ limit: 100 });
       setCandidates(allCandidates);
       setElectionList(elections.items);
       setIsLoading(false);
@@ -89,12 +90,15 @@ export default function CandidatesPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     if (!form.electionId) {
       setPositionList([]);
       return;
     }
-    const election = storage.getElectionById(form.electionId);
-    setPositionList(election?.positions || []);
+    electionService.getElectionById(form.electionId).then((election) => {
+      if (!cancelled) setPositionList(election?.positions || []);
+    });
+    return () => { cancelled = true; };
   }, [form.electionId]);
 
   const electionOptions = [
@@ -140,14 +144,14 @@ export default function CandidatesPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim() || !form.electionId) {
       toast('error', 'Name and election are required.');
       return;
     }
 
     if (editCandidate) {
-      storage.updateCandidate(editCandidate.id, {
+      await candidateService.updateCandidate(editCandidate.id, {
         name: form.name,
         electionId: form.electionId,
         positionId: form.positionId,
@@ -159,7 +163,7 @@ export default function CandidatesPage() {
       });
       toast('success', `${form.name} has been updated.`);
     } else {
-      storage.createCandidate({
+      await candidateService.createCandidate({
         electionId: form.electionId,
         positionId: form.positionId || `pos_default_${form.electionId}`,
         name: form.name,
@@ -172,22 +176,22 @@ export default function CandidatesPage() {
       toast('success', `${form.name} has been added.`);
     }
 
-    const allCandidates = storage.getCandidates();
+    const allCandidates = await candidateService.getCandidates();
     setCandidates(allCandidates);
     setShowModal(false);
     setForm(emptyForm);
     setEditCandidate(null);
   };
 
-  const handleDelete = (id: string) => {
-    storage.deleteCandidate(id);
+  const handleDelete = async (id: string) => {
+    await candidateService.deleteCandidate(id);
     setCandidates((prev) => prev.filter((c) => c.id !== id));
     toast('success', 'The candidate has been removed.');
     setDeleteTarget(null);
   };
 
-  const handleStatusChange = (id: string, status: CandidateStatus) => {
-    storage.updateCandidate(id, { status });
+  const handleStatusChange = async (id: string, status: CandidateStatus) => {
+    await candidateService.updateCandidate(id, { status });
     setCandidates((prev) =>
       prev.map((c) => (c.id === id ? { ...c, status } : c))
     );

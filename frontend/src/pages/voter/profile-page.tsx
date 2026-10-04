@@ -3,7 +3,7 @@ import { User, Mail, Phone, CreditCard, Shield, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Card, Input, Badge } from '@/components/ui';
 import { useAuthStore } from '@/store/auth-store';
-import { authApi } from '@/api/auth';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/toast';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
@@ -30,19 +30,16 @@ export default function ProfilePage() {
   const handleSavePersonal = async () => {
     setIsSaving(true);
     try {
-      await authApi.updateProfile({
-        fullName: personalInfo.fullName,
-        phone: personalInfo.phone,
-      });
-      if (user) {
-        setUser({ ...user, fullName: personalInfo.fullName, phone: personalInfo.phone });
-      }
+      if (!user) return;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name: personalInfo.fullName, phone: personalInfo.phone || null })
+        .eq('id', user.id);
+      if (error) throw error;
+      setUser({ ...user, fullName: personalInfo.fullName, phone: personalInfo.phone });
       toast('success', 'Profile updated successfully.');
     } catch {
-      if (user) {
-        setUser({ ...user, fullName: personalInfo.fullName, phone: personalInfo.phone });
-      }
-      toast('success', 'Profile updated successfully.');
+      toast('error', 'Failed to update profile.');
     } finally {
       setIsSaving(false);
     }
@@ -55,10 +52,15 @@ export default function ProfilePage() {
     }
     setIsSaving(true);
     try {
-      await authApi.changePassword({
-        currentPassword: passwords.current,
-        newPassword: passwords.newPassword,
+      if (!user?.email) return;
+      // Verify the current password before allowing the change
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwords.current,
       });
+      if (signInError) throw signInError;
+      const { error } = await supabase.auth.updateUser({ password: passwords.newPassword });
+      if (error) throw error;
       toast('success', 'Password changed successfully.');
       setPasswords({ current: '', newPassword: '', confirm: '' });
     } catch {

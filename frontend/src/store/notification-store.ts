@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Notification } from '@/types';
-import { mockNotifications } from '@/mocks/notifications';
+import * as notificationService from '@/services/notificationService';
+import { useAuthStore } from '@/store/auth-store';
 
 interface NotificationState {
   notifications: Notification[];
@@ -25,7 +26,8 @@ export const useNotificationStore = create<NotificationStore>()((set) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
-      const items = mockNotifications;
+      const user = useAuthStore.getState().user;
+      const items = user ? await notificationService.getNotifications(user.id) : [];
       const unreadCount = items.filter((n) => !n.isRead).length;
       set({
         notifications: items,
@@ -38,6 +40,7 @@ export const useNotificationStore = create<NotificationStore>()((set) => ({
   },
 
   markAsRead: async (id: string) => {
+    await notificationService.markNotificationRead(id).catch(() => undefined);
     set((state) => {
       const notifications = state.notifications.map((n) =>
         n.id === id ? { ...n, isRead: true } : n
@@ -50,6 +53,8 @@ export const useNotificationStore = create<NotificationStore>()((set) => ({
   },
 
   markAllAsRead: async () => {
+    const user = useAuthStore.getState().user;
+    if (user) await notificationService.markAllNotificationsRead(user.id).catch(() => undefined);
     set((state) => ({
       notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
       unreadCount: 0,

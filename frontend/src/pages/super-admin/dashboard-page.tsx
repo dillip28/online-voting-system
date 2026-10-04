@@ -18,17 +18,17 @@ import { cn, formatDateTime } from '@/lib/utils';
 import AdminLayout from '@/layouts/admin-layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getDashboardStats } from '@/services/electionStorage';
-import { getAuditLogs } from '@/services/auditStorage';
+import { getDashboardStats } from '@/services/electionService';
+import { getAuditLogs } from '@/services/auditService';
 
 export default function SuperAdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const stats = getDashboardStats();
-      const auditResult = getAuditLogs({ limit: 5 });
+    const timer = setTimeout(async () => {
+      const stats = await getDashboardStats();
+      const auditResult = await getAuditLogs({ limit: 5 });
       setDashboardData({
         totalAdmins: 3,
         totalElections: (stats.stats.activeElections || 0) + (stats.stats.upcomingElections || 0) + (stats.stats.completedElections || 0),

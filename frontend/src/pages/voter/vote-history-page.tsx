@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { History, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Card, Badge, EmptyState, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
-import * as storage from '@/services/electionStorage';
-import { useAuthStore } from '@/store/auth-store';
+import { votesApi } from '@/api/votes';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
 interface VoteHistoryItem {
@@ -29,17 +28,15 @@ export default function VoteHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const user = useAuthStore.getState().user;
-      const voterId = user?.id || 'demo_voter';
-      const history = storage.getVotingHistory(voterId);
-      setVotes(history.map((h, i) => ({
+    const timer = setTimeout(async () => {
+      const result = await votesApi.getVotingHistory();
+      setVotes(result.data.items.map((h, i) => ({
         id: `vh_${i}`,
-        electionId: h.electionId,
-        electionTitle: h.electionTitle,
+        electionId: h.election.id,
+        electionTitle: h.election.title,
         confirmationId: h.confirmationId,
         status: h.status || 'submitted',
-        votedAt: h.votedAt,
+        votedAt: h.submittedAt,
       })));
       setIsLoading(false);
     }, 300);

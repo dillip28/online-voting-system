@@ -1,4 +1,5 @@
-import * as storage from '@/services/electionStorage';
+import * as storage from '@/services/electionService';
+import * as candidateService from '@/services/candidateService';
 import type { ApiResponse, Candidate, Election, ElectionStatus, PaginatedResponse, Result } from '@/types';
 
 interface ElectionFilters {
@@ -12,7 +13,7 @@ interface ElectionFilters {
 
 export const electionsApi = {
   async getElections(filters?: ElectionFilters): Promise<ApiResponse<PaginatedResponse<Election>>> {
-    const result = storage.getElections({
+    const result = await storage.getElections({
       status: filters?.status,
       search: filters?.search,
       page: filters?.page,
@@ -22,7 +23,7 @@ export const electionsApi = {
   },
 
   async getElection(id: string): Promise<ApiResponse<Election>> {
-    const election = storage.getElectionById(id);
+    const election = await storage.getElectionById(id);
     if (!election) throw new Error('Election not found');
     return { data: election, success: true };
   },
@@ -36,7 +37,7 @@ export const electionsApi = {
     settings?: { allowNOTA?: boolean };
     positions: { title: string; description?: string; displayOrder: number; maxSelections?: number }[];
   }): Promise<ApiResponse<Election>> {
-    const election = storage.createElection({
+    const election = await storage.createElection({
       title: data.title,
       description: data.description || '',
       type: data.type,
@@ -68,24 +69,24 @@ export const electionsApi = {
     if (data.organization) updates.organization = data.organization as string;
     if (data.status) updates.status = data.status as ElectionStatus;
 
-    const election = storage.updateElection(id, updates);
+    const election = await storage.updateElection(id, updates);
     if (!election) throw new Error('Election not found');
     return { data: election, success: true };
   },
 
   async deleteElection(id: string): Promise<ApiResponse<{ message: string }>> {
-    const deleted = storage.deleteElection(id);
+    const deleted = await storage.deleteElection(id);
     if (!deleted) throw new Error('Election not found');
     return { data: { message: 'Election deleted successfully' }, success: true };
   },
 
   async getElectionCandidates(electionId: string): Promise<ApiResponse<Candidate[]>> {
-    const candidates = storage.getCandidates(electionId);
+    const candidates = await candidateService.getCandidates(electionId);
     return { data: candidates, success: true };
   },
 
   async getElectionResults(electionId: string): Promise<ApiResponse<Result[]>> {
-    const results = storage.getElectionResults(electionId);
+    const results = await storage.getElectionResults(electionId);
     if (!results) throw new Error('Results not found');
     return { data: results as unknown as Result[], success: true };
   },
@@ -95,25 +96,25 @@ export const electionsApi = {
   },
 
   async scheduleElection(id: string): Promise<ApiResponse<Election>> {
-    const election = storage.scheduleElection(id);
+    const election = await storage.scheduleElection(id);
     if (!election) throw new Error('Election not found');
     return { data: election, success: true };
   },
 
   async openElection(id: string): Promise<ApiResponse<Election>> {
-    const election = storage.openElection(id);
+    const election = await storage.openElection(id);
     if (!election) throw new Error('Election not found');
     return { data: election, success: true };
   },
 
   async closeElection(id: string): Promise<ApiResponse<Election>> {
-    const election = storage.closeElection(id);
+    const election = await storage.closeElection(id);
     if (!election) throw new Error('Election not found');
     return { data: election, success: true };
   },
 
   async publishResults(id: string): Promise<ApiResponse<Election>> {
-    const election = storage.publishResults(id);
+    const election = await storage.publishResults(id);
     if (!election) throw new Error('Election not found');
     return { data: election, success: true };
   },

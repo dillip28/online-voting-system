@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
-import * as storage from '@/services/electionStorage';
+import * as storage from '@/services/electionService';
 import AdminLayout from '@/layouts/admin-layout';
 
 const electionTypeOptions = [
@@ -54,8 +54,8 @@ export default function ElectionEditPage() {
 
   useEffect(() => {
     if (!id) return;
-    const timer = setTimeout(() => {
-      const election = storage.getElectionById(id);
+    const timer = setTimeout(async () => {
+      const election = await storage.getElectionById(id);
       if (election) {
         const start = new Date(election.startDate);
         const end = new Date(election.endDate);
@@ -117,7 +117,7 @@ export default function ElectionEditPage() {
       const startDateTime = `${form!.startDate}T${form!.startTime}:00`;
       const endDateTime = `${form!.endDate}T${form!.endTime}:00`;
 
-      storage.updateElection(id, {
+      await storage.updateElection(id, {
         title: form!.title,
         description: form!.description,
         type: form!.type as any,

@@ -26,7 +26,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import * as storage from '@/services/electionStorage';
+import * as storage from '@/services/electionService';
 import type { Election } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -74,17 +74,24 @@ export default function ResultsPage() {
   const [result, setResult] = useState<ElectionResultResponse | null>(null);
 
   useEffect(() => {
-    const elections = storage.getElections({ limit: 100 });
-    setElectionOptions(
-      elections.items.map((e: Election) => ({
-        id: e.id,
-        title: e.title,
-        status: e.status,
-        totalVotes: e.votesCast,
-        eligibleVoters: e.eligibleVoters,
-      }))
-    );
-    setIsLoadingElections(false);
+    let cancelled = false;
+    async function load() {
+      const elections = await storage.getElections({ limit: 100 });
+      if (!cancelled) {
+        setElectionOptions(
+          elections.items.map((e: Election) => ({
+            id: e.id,
+            title: e.title,
+            status: e.status,
+            totalVotes: e.votesCast,
+            eligibleVoters: e.eligibleVoters,
+          }))
+        );
+        setIsLoadingElections(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -94,8 +101,8 @@ export default function ResultsPage() {
     }
 
     setIsLoading(true);
-    const timer = setTimeout(() => {
-      const r = storage.getElectionResults(selectedElectionId);
+    const timer = setTimeout(async () => {
+      const r = await storage.getElectionResults(selectedElectionId);
       setResult(r as ElectionResultResponse | null);
       setIsLoading(false);
     }, 200);

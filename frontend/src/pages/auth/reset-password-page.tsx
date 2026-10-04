@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Lock, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { authApi } from '@/api/auth';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/toast';
 import type { FormEvent } from 'react';
 
@@ -27,8 +27,6 @@ function getPasswordStrength(password: string): { level: PasswordStrength; color
 
 export default function ResetPasswordPage() {
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') || '';
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,7 +61,7 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      await authApi.resetPassword(token, password);
+      await supabase.auth.updateUser({ password });
       setSuccess(true);
       toast('success', 'Your password has been successfully reset.');
     } catch (err: any) {

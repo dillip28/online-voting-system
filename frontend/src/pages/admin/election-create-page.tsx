@@ -20,8 +20,8 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { useAuthStore } from '@/store/auth-store';
-import * as storage from '@/services/electionStorage';
-import { addAuditLog } from '@/services/auditStorage';
+import * as storage from '@/services/electionService';
+import { addAuditLog } from '@/services/auditService';
 import AdminLayout from '@/layouts/admin-layout';
 
 const electionTypeOptions = [
@@ -311,7 +311,7 @@ export default function ElectionCreatePage() {
         }))
       );
 
-      const election = storage.createElection({
+      const election = await storage.createElection({
         title: form.title,
         description: form.description,
         type: form.type,

@@ -8,13 +8,11 @@ import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import { resetDemoData } from '@/services/electionStorage';
-import { resetDemoVoters } from '@/services/voterStorage';
-import { resetDemoAuditLogs } from '@/services/auditStorage';
+
+import { getSystemSettings, saveSystemSettings } from '@/services/settingsService';
 import type { SystemSettings } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
-const SETTINGS_KEY = 'vs_system_settings';
 
 const defaultSettings: SystemSettings = {
   electionDefaults: {
@@ -43,24 +41,12 @@ const defaultSettings: SystemSettings = {
   },
 };
 
-function loadSettings(): SystemSettings {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) return { ...defaultSettings, ...JSON.parse(raw) };
-  } catch { /* use defaults */ }
-  return defaultSettings;
-}
-
-function saveSettings(settings: SystemSettings): void {
-  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* ignore */ }
-}
-
 export default function SettingsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('election');
   const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [ipWhitelistText, setIpWhitelistText] = useState(
@@ -68,8 +54,11 @@ export default function SettingsPage() {
   );
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSettings(loadSettings());
+    const timer = setTimeout(async () => {
+      try {
+        const stored = await getSystemSettings();
+        if (stored) setSettings({ ...defaultSettings, ...stored });
+      } catch { /* fall back to defaults */ }
       setIsLoading(false);
     }, 200);
     return () => clearTimeout(timer);
@@ -82,19 +71,26 @@ export default function SettingsPage() {
     { id: 'security', label: 'Security' },
   ];
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    saveSettings(settings);
-    toast('success', 'Settings saved successfully.');
+    try {
+      await saveSystemSettings(settings);
+      toast('success', 'Settings saved successfully.');
+    } catch {
+      toast('error', 'Failed to save settings.');
+    }
     setIsSaving(false);
     setShowConfirm(false);
   };
 
-  const handleReset = () => {
-    resetDemoData();
-    resetDemoVoters();
-    resetDemoAuditLogs();
-    toast('success', 'All demo data has been reset to defaults.');
+  const handleReset = async () => {
+    try {
+      await saveSystemSettings(defaultSettings);
+      setSettings(defaultSettings);
+      toast('success', 'Settings have been reset to defaults.');
+    } catch {
+      toast('error', 'Failed to reset settings.');
+    }
     setShowResetConfirm(false);
   };
 

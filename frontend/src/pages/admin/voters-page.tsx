@@ -27,8 +27,8 @@ import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import * as voterStorage from '@/services/voterStorage';
-import { addAuditLog } from '@/services/auditStorage';
+import * as voterService from '@/services/voterService';
+import { addAuditLog } from '@/services/auditService';
 import { useAuthStore } from '@/store/auth-store';
 import type { User } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
@@ -72,8 +72,8 @@ export default function VotersPage() {
   const [editVoter, setEditVoter] = useState<User | null>(null);
   const [form, setForm] = useState<VoterForm>(emptyVoterForm);
 
-  const loadVoters = () => {
-    const result = voterStorage.getVoters({ limit: 100 });
+  const loadVoters = async () => {
+    const result = await voterService.getVoters({ limit: 100 });
     setVoters(result.items);
     setIsLoading(false);
   };
@@ -122,14 +122,14 @@ export default function VotersPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.fullName.trim() || !form.email.trim()) {
       toast('error', 'Name and email are required.');
       return;
     }
 
     if (editVoter) {
-      voterStorage.updateVoter(editVoter.id, {
+      await voterService.updateVoter(editVoter.id, {
         fullName: form.fullName,
         email: form.email,
         phone: form.phone || undefined,
@@ -137,7 +137,7 @@ export default function VotersPage() {
       });
       toast('success', `${form.fullName} has been updated.`);
     } else {
-      voterStorage.createVoter({
+      const created = await voterService.createVoter({
         fullName: form.fullName,
         email: form.email,
         phone: form.phone || undefined,
@@ -149,7 +149,7 @@ export default function VotersPage() {
         userRole: user?.role || 'admin',
         action: 'voter.create',
         resource: 'voter',
-        resourceId: 'new',
+        resourceId: created.id,
         details: `Added voter: ${form.fullName}`,
       });
       toast('success', `${form.fullName} has been added.`);
@@ -161,22 +161,22 @@ export default function VotersPage() {
     setEditVoter(null);
   };
 
-  const handleDelete = (id: string) => {
-    voterStorage.deleteVoter(id);
+  const handleDelete = async (id: string) => {
+    await voterService.deleteVoter(id);
     loadVoters();
     toast('success', 'Voter has been removed.');
     setDeleteTarget(null);
   };
 
-  const handleToggleActive = (id: string) => {
-    voterStorage.toggleVoterActive(id);
+  const handleToggleActive = async (id: string) => {
+    await voterService.toggleVoterActive(id);
     loadVoters();
     toast('success', 'Voter account status has been toggled.');
     setToggleTarget(null);
   };
 
-  const handleToggleVerified = (id: string) => {
-    voterStorage.toggleVoterVerified(id);
+  const handleToggleVerified = async (id: string) => {
+    await voterService.toggleVoterVerified(id);
     loadVoters();
     toast('success', 'Voter verification status has been toggled.');
     setToggleTarget(null);

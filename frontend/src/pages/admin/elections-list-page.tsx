@@ -19,7 +19,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/components/ui/toast';
-import * as storage from '@/services/electionStorage';
+import * as storage from '@/services/electionService';
 import type { ElectionStatus } from '@/types';
 import AdminLayout from '@/layouts/admin-layout';
 
@@ -45,8 +45,8 @@ export default function ElectionsListPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const result = storage.getElections({ limit: 100 });
+    const timer = setTimeout(async () => {
+      const result = await storage.getElections({ limit: 100 });
       setElections(result.items);
       setIsLoading(false);
     }, 200);
@@ -69,23 +69,31 @@ export default function ElectionsListPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleDelete = (id: string) => {
-    storage.deleteElection(id);
-    setElections((prev) => prev.filter((e) => e.id !== id));
-    toast('success', 'Election deleted successfully.');
-    setDeleteTarget(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await storage.deleteElection(id);
+      setElections((prev) => prev.filter((e) => e.id !== id));
+      toast('success', 'Election deleted successfully.');
+      setDeleteTarget(null);
+    } catch {
+      toast('error', 'Failed to delete election.');
+    }
   };
 
-  const handlePublishToggle = (id: string, currentStatus: string) => {
-    if (currentStatus === 'draft') {
-      storage.scheduleElection(id);
-      toast('success', 'Election has been published.');
-    } else if (currentStatus === 'scheduled') {
-      storage.unpublishElection(id);
-      toast('success', 'Election has been unpublished.');
+  const handlePublishToggle = async (id: string, currentStatus: string) => {
+    try {
+      if (currentStatus === 'draft') {
+        await storage.scheduleElection(id);
+        toast('success', 'Election has been published.');
+      } else if (currentStatus === 'scheduled') {
+        await storage.unpublishElection(id);
+        toast('success', 'Election has been unpublished.');
+      }
+      const result = await storage.getElections({ limit: 100 });
+      setElections(result.items);
+    } catch {
+      toast('error', 'Failed to update election.');
     }
-    const result = storage.getElections({ limit: 100 });
-    setElections(result.items);
   };
 
   return (

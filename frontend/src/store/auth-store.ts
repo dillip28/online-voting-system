@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { User, UserRole } from '@/types';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import type { Session } from '@supabase/supabase-js';
 
 interface RegisterData {
   email: string;
@@ -15,6 +17,7 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  error: string | null;
 }
 
 interface AuthActions {
@@ -22,137 +25,171 @@ interface AuthActions {
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<boolean>;
   setUser: (user: User | null) => void;
-  setToken: (token: string | null) => void;
   clearAuth: () => void;
+  initAuth: () => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
 
-interface DemoAccount {
-  password: string;
-  role: UserRole;
-  fullName: string;
-  studentId: string;
-  department: string;
+interface ProfileRow {
+  id: string;
+  role: 'admin' | 'voter';
+  name: string;
+  email: string;
+  created_at: string;
 }
 
-const DEMO_ACCOUNTS: Record<string, DemoAccount> = {
-  'voter@test.com': {
-    password: 'password123',
-    role: 'voter',
-    fullName: 'Alex Johnson',
-    studentId: 'STU-2024-0892',
-    department: 'Computer Science',
-  },
-  'admin@test.com': {
-    password: 'password123',
-    role: 'admin',
-    fullName: 'Sarah Williams',
-    studentId: 'STU-2024-0001',
-    department: 'Administration',
-  },
-  'superadmin@test.com': {
-    password: 'password123',
-    role: 'super_admin',
-    fullName: 'David Admin',
-    studentId: 'STU-2024-0000',
-    department: 'Administration',
-  },
-};
+const profileToUser = (profile: ProfileRow): User => ({
+  id: profile.id,
+  email: profile.email,
+  fullName: profile.name,
+  role: profile.role as UserRole,
+  isVerified: true,
+  isActive: true,
+  twoFactorEnabled: false,
+  createdAt: profile.created_at,
+  updatedAt: profile.created_at,
+});
 
-const createUser = (
-  email: string,
-  account: Pick<DemoAccount, 'role' | 'fullName' | 'studentId' | 'department'>,
-  phone?: string
-): User => {
-  const timestamp = new Date().toISOString();
-  return {
-    id: `local_${email.replace(/[^a-z0-9]/gi, '_')}`,
-    email,
-    fullName: account.fullName,
-    phone,
-    studentId: account.studentId,
-    role: account.role,
-    isVerified: true,
-    isActive: true,
-    twoFactorEnabled: false,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-};
+async function fetchOrCreateProfile(session: Session): Promise<ProfileRow | null> {
+  const authUser = session.user;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', authUser.id)
+    .maybeSingle();
 
-const getStoredAuth = (): { token: string | null; user: User | null } => {
-  try {
-    const token = localStorage.getItem('auth_token');
-    const userRaw = localStorage.getItem('auth_user');
-    return { token, user: userRaw ? (JSON.parse(userRaw) as User) : null };
-  } catch {
-    return { token: null, user: null };
+  if (error) {
+    console.error('[auth] Failed to load profile:', error.message);
+    return null;
   }
-};
+  if (data) return data as ProfileRow;
 
-const { token: initialToken, user: initialUser } = getStoredAuth();
+  const { data: created, error: insertError } = await supabase
+    .from('profiles')
+    .insert({
+      id: authUser.id,
+      email: authUser.email ?? '',
+      name: (authUser.user_metadata?.full_name as string) || authUser.email?.split('@')[0] || 'User',
+      role: 'voter',
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    console.error('[auth] Failed to create profile:', insertError.message);
+    return null;
+  }
+  return created as ProfileRow;
+}
 
 export const useAuthStore = create<AuthStore>()((set, get) => ({
-  user: initialUser,
-  token: initialToken,
-  isAuthenticated: Boolean(initialToken && initialUser),
-  isLoading: false,
+  user: null,
+  token: null,
+  isAuthenticated: false,
+  isLoading: true,
+  error: null,
+
+  initAuth: async () => {
+    if (!isSupabaseConfigured) {
+      set({ isLoading: false, error: 'Supabase is not configured.' });
+      return;
+    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const profile = await fetchOrCreateProfile(session);
+        set({
+          user: profile ? profileToUser(profile) : null,
+          token: session.access_token,
+          isAuthenticated: Boolean(profile),
+          isLoading: false,
+        });
+      } else {
+        set({ isLoading: false });
+      }
+
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session) {
+          const profile = await fetchOrCreateProfile(session);
+          set({
+            user: profile ? profileToUser(profile) : null,
+            token: session.access_token,
+            isAuthenticated: Boolean(profile),
+          });
+        } else {
+          set({ user: null, token: null, isAuthenticated: false });
+        }
+      });
+    } catch (err) {
+      set({ isLoading: false, error: err instanceof Error ? err.message : 'Auth init failed' });
+    }
+  },
 
   login: async (email, password) => {
-    set({ isLoading: true });
-    const normalizedEmail = email.trim().toLowerCase();
-    const account = DEMO_ACCOUNTS[normalizedEmail];
-    if (!account || account.password !== password) {
-      set({ isLoading: false });
+    if (!isSupabaseConfigured) {
+      set({ error: 'Supabase is not configured.' });
       return false;
     }
+    set({ isLoading: true, error: null });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (error || !data.session) {
+      set({ isLoading: false, error: error?.message ?? 'Login failed' });
+      return false;
+    }
+    const profile = await fetchOrCreateProfile(data.session);
+    set({
+      user: profile ? profileToUser(profile) : null,
+      token: data.session.access_token,
+      isAuthenticated: Boolean(profile),
+      isLoading: false,
+      error: profile ? null : 'Profile not found. Please contact support.',
+    });
+    return Boolean(profile);
+  },
 
-    const user = createUser(normalizedEmail, account);
-    const token = `local_token_${user.id}`;
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('auth_user', JSON.stringify(user));
-    set({ user, token, isAuthenticated: true, isLoading: false });
+  register: async (data) => {
+    if (!isSupabaseConfigured) {
+      set({ error: 'Supabase is not configured.' });
+      return false;
+    }
+    set({ isLoading: true, error: null });
+    const { data: signUpData, error } = await supabase.auth.signUp({
+      email: data.email.trim().toLowerCase(),
+      password: data.password,
+      options: { data: { full_name: data.fullName.trim() } },
+    });
+    if (error) {
+      set({ isLoading: false, error: error.message });
+      return false;
+    }
+    if (signUpData.session) {
+      const profile = await fetchOrCreateProfile(signUpData.session);
+      set({
+        user: profile ? profileToUser(profile) : null,
+        token: signUpData.session.access_token,
+        isAuthenticated: Boolean(profile),
+        isLoading: false,
+      });
+    } else {
+      set({ isLoading: false });
+    }
     return true;
   },
 
   logout: async () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
+    await supabase.auth.signOut();
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
   },
 
-  register: async (data) => {
-    set({ isLoading: true });
-    const email = data.email.trim().toLowerCase();
-    const user = createUser(email, {
-      role: 'voter',
-      fullName: data.fullName.trim(),
-      studentId: data.studentId.trim(),
-      department: data.department.trim(),
-    }, data.phone.trim() || undefined);
-    const token = `local_token_${user.id}`;
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('auth_user', JSON.stringify(user));
-    set({ user, token, isAuthenticated: true, isLoading: false });
-    return true;
-  },
-
   setUser: (user) => {
-    if (user) localStorage.setItem('auth_user', JSON.stringify(user));
-    else localStorage.removeItem('auth_user');
     set({ user, isAuthenticated: Boolean(user && get().token) });
   },
 
-  setToken: (token) => {
-    if (token) localStorage.setItem('auth_token', token);
-    else localStorage.removeItem('auth_token');
-    set({ token, isAuthenticated: Boolean(token && get().user) });
-  },
-
   clearAuth: () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
   },
 }));

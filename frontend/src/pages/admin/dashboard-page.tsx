@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
-import { getDashboardStats } from '@/services/electionStorage';
+import { getDashboardStats } from '@/services/electionService';
 import AdminLayout from '@/layouts/admin-layout';
 
 const CHART_COLORS = {
@@ -47,11 +47,11 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<ReturnType<typeof getDashboardStats> | null>(null);
+  const [data, setData] = useState<Awaited<ReturnType<typeof getDashboardStats>> | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setData(getDashboardStats());
+      getDashboardStats().then(setData);
       setIsLoading(false);
     }, 300);
     return () => clearTimeout(timer);

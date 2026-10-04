@@ -16,7 +16,8 @@ import { Skeleton } from '@/components/ui';
 import { ErrorState } from '@/components/ui';
 import { useElectionStore } from '@/store/election-store';
 import { useAuthStore } from '@/store/auth-store';
-import * as storage from '@/services/electionStorage';
+import { computeAvailability, type ElectionAvailability } from '@/services/eligibilityService';
+import { supabase } from '@/lib/supabaseClient';
 import type { Candidate, ElectionType } from '@/types';
 import DashboardLayout from '@/layouts/dashboard-layout';
 
@@ -73,6 +74,7 @@ export default function ElectionDetailPage() {
   const { currentElection, candidates, isLoading, error, fetchElection, fetchCandidates } = useElectionStore();
   const { user } = useAuthStore();
   const [hasVoted, setHasVoted] = useState(false);
+  const [availability, setAvailability] = useState<ElectionAvailability>('not_eligible');
 
   useEffect(() => {
     if (id) {
@@ -83,9 +85,40 @@ export default function ElectionDetailPage() {
 
   useEffect(() => {
     if (id && user) {
-      setHasVoted(storage.hasUserVoted(id, user.id));
+      supabase
+        .from('voter_eligibility')
+        .select('eligible, has_voted')
+        .eq('election_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          const access = data
+            ? { eligible: data.eligible as boolean, hasVoted: data.has_voted as boolean }
+            : null;
+          if (access?.hasVoted) setHasVoted(true);
+          const election = useElectionStore.getState().currentElection;
+          if (election) setAvailability(computeAvailability(election, access));
+        });
     }
   }, [id, user]);
+
+  useEffect(() => {
+    const election = useElectionStore.getState().currentElection;
+    if (id && user && election) {
+      supabase
+        .from('voter_eligibility')
+        .select('eligible, has_voted')
+        .eq('election_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          const access = data
+            ? { eligible: data.eligible as boolean, hasVoted: data.has_voted as boolean }
+            : null;
+          setAvailability(computeAvailability(election, access));
+        });
+    }
+  }, [id, user, currentElection]);
 
   if (isLoading) {
     return (
@@ -116,7 +149,6 @@ export default function ElectionDetailPage() {
   }
 
   const election = currentElection;
-  const isActive = election.status === 'active';
   const hasResults = election.publishedResults;
   const now = new Date();
   const endDate = new Date(election.endDate);
@@ -191,7 +223,7 @@ export default function ElectionDetailPage() {
         )}
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          {isActive && !hasEnded && !hasVoted && (
+          {availability === 'active' && !hasVoted && (
             <Link to={`/elections/${election.id}/vote`}>
               <Button size="lg" className="bg-primary-600 hover:bg-primary-700 text-white rounded-md">
                 <Vote className="mr-2 h-4 w-4" />
@@ -199,10 +231,28 @@ export default function ElectionDetailPage() {
               </Button>
             </Link>
           )}
-          {isActive && !hasEnded && hasVoted && (
+          {(availability === 'already_voted' || hasVoted) && (
             <div className="flex items-center gap-2 rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-accent-700">
               <CheckCircle className="h-5 w-5" />
               <span className="text-[14px] font-medium">You have already voted in this election</span>
+            </div>
+          )}
+          {availability === 'not_eligible' && (
+            <div className="flex items-center gap-2 text-surface-500 text-[14px]">
+              <AlertCircle className="h-4 w-4" />
+              <span>You are not eligible to vote in this election</span>
+            </div>
+          )}
+          {availability === 'not_started' && (
+            <div className="flex items-center gap-2 text-surface-500 text-[14px]">
+              <Clock className="h-4 w-4" />
+              <span>This election has not started yet</span>
+            </div>
+          )}
+          {availability === 'closed' && (
+            <div className="flex items-center gap-2 text-surface-500 text-[14px]">
+              <Clock className="h-4 w-4" />
+              <span>This election is closed</span>
             </div>
           )}
           {hasResults && (

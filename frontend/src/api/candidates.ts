@@ -1,4 +1,4 @@
-import * as storage from '@/services/electionStorage';
+import * as storage from '@/services/candidateService';
 import type { ApiResponse, Candidate, CandidateStatus, PaginatedResponse } from '@/types';
 
 interface CandidateFilters {
@@ -12,7 +12,7 @@ interface CandidateFilters {
 
 export const candidatesApi = {
   async getCandidates(filters?: CandidateFilters): Promise<ApiResponse<PaginatedResponse<Candidate>>> {
-    let candidates = storage.getCandidates(filters?.electionId);
+    let candidates = await storage.getCandidates(filters?.electionId);
 
     if (filters?.status) {
       candidates = candidates.filter((c) => c.status === filters.status);
@@ -37,7 +37,7 @@ export const candidatesApi = {
   },
 
   async getCandidate(id: string): Promise<ApiResponse<Candidate>> {
-    const candidate = storage.getCandidateById(id);
+    const candidate = await storage.getCandidateById(id);
     if (!candidate) throw new Error('Candidate not found');
     return { data: candidate, success: true };
   },
@@ -51,18 +51,18 @@ export const candidatesApi = {
     manifesto: string;
     photo?: string;
   }): Promise<ApiResponse<Candidate>> {
-    const candidate = storage.createCandidate(data);
+    const candidate = await storage.createCandidate(data);
     return { data: candidate, success: true };
   },
 
   async updateCandidate(id: string, data: Partial<Candidate>): Promise<ApiResponse<Candidate>> {
-    const candidate = storage.updateCandidate(id, data);
+    const candidate = await storage.updateCandidate(id, data);
     if (!candidate) throw new Error('Candidate not found');
     return { data: candidate, success: true };
   },
 
   async deleteCandidate(id: string): Promise<ApiResponse<{ message: string }>> {
-    const deleted = storage.deleteCandidate(id);
+    const deleted = await storage.deleteCandidate(id);
     if (!deleted) throw new Error('Candidate not found');
     return { data: { message: 'Candidate deleted' }, success: true };
   },

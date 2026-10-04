@@ -11,7 +11,7 @@ import type { FormEvent } from 'react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, user } = useAuthStore();
+  const { login } = useAuthStore();
   const { toast } = useToast();
 
   const [email, setEmail] = useState('');

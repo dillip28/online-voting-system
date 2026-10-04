@@ -73,6 +73,13 @@ export const useVotingStore = create<VotingStore>()((set, get) => ({
 
       if (response.success && response.data) {
         const { data } = response;
+        if (!data.success) {
+          set({
+            isSubmitting: false,
+            error: data.message || 'Failed to submit vote',
+          });
+          return false;
+        }
         if (data.alreadyVoted) {
           set({
             isSubmitting: false,

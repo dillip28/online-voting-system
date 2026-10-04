@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Search, ClipboardList } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
@@ -16,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
-import * as auditStorage from '@/services/auditStorage';
+import * as auditService from '@/services/auditService';
 import AdminLayout from '@/layouts/admin-layout';
 
 const ITEMS_PER_PAGE = 10;
@@ -64,8 +63,8 @@ export default function AuditLogsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const result = auditStorage.getAuditLogs({ limit: 500 });
+    const timer = setTimeout(async () => {
+      const result = await auditService.getAuditLogs({ limit: 500 });
       setLogs(result.items);
       setIsLoading(false);
     }, 200);
